@@ -1,18 +1,30 @@
 export default function Contact() {
   return (
     <main className="bg-[#FBF3E9]">
-      <section className="bg-[#F0CBA3] py-20 px-6 text-center">
-        <p className="text-sm tracking-widest text-[#8B6F5C] mb-3 uppercase">
-          Get in Touch
-        </p>
-        <h1 className="font-[family-name:var(--font-playfair)] text-4xl md:text-5xl text-[#6B4530]">
-          Contact Us
-        </h1>
+      {/* Hero Section */}
+      <section className="relative h-[380px] flex items-center justify-center overflow-hidden">
+        <img
+          src="/hero.jpg"
+          alt="Mitti handmade craft"
+          className="absolute inset-0 w-full h-full object-cover"
+        />
+        <div className="absolute inset-0 bg-gradient-to-b from-[#3D2417]/80 via-[#3D2417]/55 to-[#3D2417]/85"></div>
+
+        <div className="relative z-10 text-center px-6">
+          <p className="text-sm tracking-[0.2em] text-[#F0CBA3] mb-4 uppercase font-medium">
+            Get in Touch
+          </p>
+          <h1 className="font-[family-name:var(--font-playfair)] text-5xl md:text-6xl text-white">
+            Contact Us
+          </h1>
+        </div>
       </section>
 
+      {/* Cards Section */}
       <section className="py-24 px-6 max-w-3xl mx-auto text-center">
-        <p className="text-[#8B6F5C] text-lg mb-16 max-w-md mx-auto leading-relaxed">
-          We&apos;d love to hear from you. Reach out through any of the platforms below.
+        <p className="text-[#6B4530] text-lg mb-16 max-w-md mx-auto leading-relaxed">
+          We&apos;d love to hear from you. Reach out through any of the
+          platforms below.
         </p>
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
