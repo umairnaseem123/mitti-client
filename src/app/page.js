@@ -1,16 +1,37 @@
-import Link from "next/link";
+﻿import Link from "next/link";
+import api from "@/lib/api";
+import NewsletterForm from "@/components/NewsletterForm";
 
-export default function Home() {
+function Stars({ rating }) {
+  return (
+    <span className="text-[#F0CBA3] text-lg tracking-tight">
+      {"\u2605".repeat(rating)}
+      <span className="text-white/25">{"\u2605".repeat(5 - rating)}</span>
+    </span>
+  );
+}
+
+async function getFeaturedReviews() {
+  try {
+    const res = await api.get("/api/products/reviews/featured");
+    return res.data || [];
+  } catch (err) {
+    console.error("Error fetching featured reviews:", err);
+    return [];
+  }
+}
+
+export default async function Home() {
+  const reviews = await getFeaturedReviews();
+
   return (
     <main className="bg-[#FBF3E9]">
-      {/* Hero Section */}
       <section className="relative h-[640px] flex items-end overflow-hidden">
         <img
           src="/hero.jpg"
           alt="Mitti handmade products"
           className="absolute inset-0 w-full h-full object-cover"
         />
-        {/* Darker gradient overlay: keeps the photo vivid up top, ensures text is readable at the bottom */}
         <div className="absolute inset-0 bg-gradient-to-t from-[#3D2417]/90 via-[#3D2417]/35 to-transparent"></div>
 
         <div className="relative z-10 max-w-2xl px-6 md:px-16 pb-16 md:pb-20">
@@ -21,8 +42,9 @@ export default function Home() {
             Welcome to Mitti&apos;s World
           </h1>
           <p className="text-white/90 text-lg md:text-xl mb-9 max-w-lg leading-relaxed">
-            Handcrafted concrete art and scented candles — each piece shaped by
-            earth, touched by artistry, and made with soul.
+            Handcrafted concrete art and scented candles &mdash; 
+            each piece
+            shaped by earth, touched by artistry, and made with soul.
           </p>
           <Link
             href="/shop"
@@ -33,24 +55,22 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Trust strip */}
       <section className="bg-[#6B4530] py-5 px-6">
         <div className="max-w-5xl mx-auto flex flex-wrap items-center justify-center gap-x-10 gap-y-3 text-center">
           <p className="text-[#F0CBA3] text-sm tracking-wide uppercase">
             100% Handmade
           </p>
-          <span className="hidden sm:inline text-[#8B6F5C]">•</span>
+          <span className="hidden sm:inline text-[#8B6F5C]">&bull;</span>
           <p className="text-[#F0CBA3] text-sm tracking-wide uppercase">
             Made in Pakistan
           </p>
-          <span className="hidden sm:inline text-[#8B6F5C]">•</span>
+          <span className="hidden sm:inline text-[#8B6F5C]">&bull;</span>
           <p className="text-[#F0CBA3] text-sm tracking-wide uppercase">
             Delivery Across Pakistan
           </p>
         </div>
       </section>
 
-      {/* Featured Categories */}
       <section className="bg-[#FBF3E9] py-24 px-6 max-w-5xl mx-auto">
         <p className="text-sm tracking-[0.2em] text-[#8B6F5C] uppercase text-center mb-3">
           Two Crafts, One Studio
@@ -107,8 +127,70 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Brand Story Snippet */}
-      <section className="bg-[#F0CBA3] py-24 px-6">
+      <section className="max-w-5xl mx-auto px-6 pb-24">
+        <div className="bg-white border border-[#E5D5C3] rounded-2xl p-10 md:p-14 flex flex-col md:flex-row items-center justify-between gap-8">
+          <div className="text-center md:text-left">
+            <p className="text-sm tracking-[0.2em] text-[#8B6F5C] uppercase mb-3">
+              Weddings &amp; Events
+            </p>
+            <h2 className="font-[family-name:var(--font-playfair)] text-2xl md:text-3xl text-[#6B4530] mb-3">
+              Planning a wedding or corporate gift order?
+            </h2>
+            <p className="text-[#8B6F5C] max-w-md">
+              We craft in bulk for weddings, corporate gifting, and events
+              &mdash; personalized to your occasion.
+            </p>
+          </div>
+          <Link
+            href="/bulk-orders"
+            className="shrink-0 inline-block bg-[#6B4530] text-white px-8 py-3.5 rounded-full font-medium hover:bg-[#8B6F5C] transition-colors"
+          >
+            Explore Bulk Orders
+          </Link>
+        </div>
+      </section>
+
+      {reviews.length > 0 && (
+        <section className="bg-[#F0CBA3] py-24 px-6">
+          <div className="max-w-5xl mx-auto">
+            <p className="text-sm tracking-[0.2em] text-[#8B6F5C] uppercase text-center mb-3">
+              Real Feedback
+            </p>
+            <h2 className="font-[family-name:var(--font-playfair)] text-4xl text-[#6B4530] text-center mb-14">
+              What Our Customers Say
+            </h2>
+
+            <div className="grid md:grid-cols-3 gap-6">
+              {reviews.slice(0, 3).map((review, i) => (
+                <div
+                  key={i}
+                  className="bg-white rounded-2xl p-7 flex flex-col shadow-sm"
+                >
+                  <span className="text-[#F0CBA3] text-5xl font-[family-name:var(--font-playfair)] leading-none mb-2">
+                    &ldquo;
+                  </span>
+                  <p className="text-[#6B4530] leading-relaxed mb-5 flex-1">
+                    {review.comment}
+                  </p>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="font-semibold text-[#6B4530] text-sm">
+                        {review.customerName}
+                      </p>
+                      <p className="text-xs text-[#8B6F5C]">
+                        on {review.productName}
+                      </p>
+                    </div>
+                    <Stars rating={review.rating} />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
+      <section className="bg-[#FBF3E9] py-24 px-6">
         <div className="max-w-3xl mx-auto text-center">
           <p className="text-sm tracking-[0.2em] text-[#8B6F5C] uppercase mb-3">
             Our Story
@@ -118,7 +200,8 @@ export default function Home() {
           </h2>
           <p className="text-[#6B4530]/80 text-lg leading-relaxed mb-8">
             Mitti was founded by two teenage creators, Aliza and Muniba, who
-            turned their love for handmade decor into a growing small business.
+            turned their love for handmade decor into a growing small
+            business.
           </p>
           <Link
             href="/about"
@@ -127,6 +210,20 @@ export default function Home() {
             Read Our Story
           </Link>
         </div>
+      </section>
+
+      <section className="bg-gradient-to-br from-[#6B4530] to-[#4A2F20] py-20 px-6 text-center">
+        <p className="text-sm tracking-[0.2em] text-[#F0CBA3] uppercase mb-3">
+          Stay in the Loop
+        </p>
+        <h2 className="font-[family-name:var(--font-playfair)] text-3xl md:text-4xl text-white mb-4">
+          Let Us Send You Our Offers
+        </h2>
+        <p className="text-[#E5D5C3]/90 max-w-md mx-auto mb-9">
+          Be the first to know about new collections, discounts, and
+          restocks &mdash; straight to your inbox.
+        </p>
+        <NewsletterForm />
       </section>
     </main>
   );

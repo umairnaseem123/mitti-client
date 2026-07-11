@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -90,6 +90,12 @@ export default function AdminSettingsPage() {
             className="block px-4 py-2 rounded-lg text-[#6B4530] hover:bg-[#F0CBA3] transition"
           >
             Orders
+          </Link>
+          <Link
+            href="/admin/subscribers"
+            className="block px-4 py-2 rounded-lg text-[#6B4530] hover:bg-[#F0CBA3] transition"
+          >
+            Subscribers
           </Link>
           <Link
             href="/admin/settings"

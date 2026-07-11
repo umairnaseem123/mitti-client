@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useState } from "react";
 import Link from "next/link";
@@ -8,6 +8,7 @@ const emptyForm = {
   name: "",
   description: "",
   price: "",
+  originalPrice: "",
   category: "Concrete",
   stock: "",
   imageUrls: [],
@@ -43,16 +44,12 @@ export default function AddProductPage() {
         const formData = new FormData();
         formData.append("image", file);
 
-        const res = await api.post(
-          "/api/upload",
-          formData,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-              "Content-Type": "multipart/form-data",
-            },
-          }
-        );
+        const res = await api.post("/api/upload", formData, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "multipart/form-data",
+          },
+        });
 
         uploadedUrls.push(res.data.imageUrl);
       }
@@ -86,6 +83,16 @@ export default function AddProductPage() {
       return;
     }
 
+    if (
+      form.originalPrice &&
+      Number(form.originalPrice) <= Number(form.price)
+    ) {
+      setError(
+        "Original Price must be higher than the current Price for a discount to show."
+      );
+      return;
+    }
+
     setSubmitting(true);
 
     try {
@@ -96,6 +103,9 @@ export default function AddProductPage() {
           name: form.name,
           description: form.description,
           price: Number(form.price),
+          originalPrice: form.originalPrice
+            ? Number(form.originalPrice)
+            : null,
           category: form.category,
           stock: Number(form.stock),
           images: form.imageUrls,
@@ -149,7 +159,7 @@ export default function AddProductPage() {
             href="/admin/products"
             className="text-sm text-[#6B4530] underline hover:text-[#8B6F5C] transition"
           >
-            Done adding? View all products â†’
+            Done adding? View all products →
           </Link>
         </div>
 
@@ -178,15 +188,32 @@ export default function AddProductPage() {
             rows="4"
             className="w-full px-4 py-3 border border-[#E5D5C3] rounded-lg text-[#6B4530] bg-white"
           />
-          <input
-            type="number"
-            name="price"
-            placeholder="Price (Rs.)"
-            value={form.price}
-            onChange={handleChange}
-            required
-            className="w-full px-4 py-3 border border-[#E5D5C3] rounded-lg text-[#6B4530] bg-white"
-          />
+
+          <div className="grid grid-cols-2 gap-4">
+            <input
+              type="number"
+              name="price"
+              placeholder="Price (Rs.)"
+              value={form.price}
+              onChange={handleChange}
+              required
+              className="w-full px-4 py-3 border border-[#E5D5C3] rounded-lg text-[#6B4530] bg-white"
+            />
+            <input
+              type="number"
+              name="originalPrice"
+              placeholder="Original Price (optional)"
+              value={form.originalPrice}
+              onChange={handleChange}
+              className="w-full px-4 py-3 border border-[#E5D5C3] rounded-lg text-[#6B4530] bg-white"
+            />
+          </div>
+          <p className="text-xs text-[#8B6F5C] -mt-2">
+            Fill Original Price only if this item is on sale — it must be
+            higher than the Price above. It will show struck-through with a
+            % OFF badge.
+          </p>
+
           <select
             name="category"
             value={form.category}
@@ -212,7 +239,7 @@ export default function AddProductPage() {
             </label>
             <p className="text-xs text-[#8B6F5C] mb-2">
               If this item comes in different designs or colors, select all
-              of them at once â€” customers will be able to flip between them
+              of them at once — customers will be able to flip between them
               on the product page.
             </p>
             <input
@@ -241,7 +268,7 @@ export default function AddProductPage() {
                       aria-label="Remove this photo"
                       className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-white border border-[#E5D5C3] text-[#6B4530] text-xs flex items-center justify-center shadow hover:bg-red-50 hover:text-red-600 transition"
                     >
-                      âœ•
+                      ✕
                     </button>
                   </div>
                 ))}

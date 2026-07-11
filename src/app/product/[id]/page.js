@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
@@ -26,10 +26,12 @@ export default function ProductDetailPage() {
   const [added, setAdded] = useState(false);
   const [activeImage, setActiveImage] = useState(0);
 
+  // Zoom lightbox state
   const [zoomOpen, setZoomOpen] = useState(false);
   const [isZoomed, setIsZoomed] = useState(false);
   const [zoomOrigin, setZoomOrigin] = useState({ x: 50, y: 50 });
 
+  // Review form state
   const [reviewForm, setReviewForm] = useState({
     customerName: "",
     rating: 5,
@@ -44,6 +46,8 @@ export default function ProductDetailPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
+  // Let the Escape key close the zoom lightbox, and disable page scroll
+  // while it's open so the background doesn't move behind it.
   useEffect(() => {
     if (!zoomOpen) return;
 
@@ -64,7 +68,7 @@ export default function ProductDetailPage() {
     try {
       const res = await api.get(`/api/products/${id}`);
       setProduct(res.data);
-      setActiveImage(0);
+      setActiveImage(0); // reset to first photo whenever a new product loads
     } catch (err) {
       console.error("Error fetching product:", err);
       setError("Could not load product.");
@@ -96,6 +100,8 @@ export default function ProductDetailPage() {
     setIsZoomed(false);
   };
 
+  // Tracks cursor position over the zoomed image as a percentage, so the
+  // zoomed-in view centers on wherever the customer is pointing.
   const handleZoomMouseMove = (e) => {
     if (!isZoomed) return;
     const rect = e.currentTarget.getBoundingClientRect();
@@ -184,12 +190,23 @@ export default function ProductDetailPage() {
   const averageRating = reviews.length
     ? reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length
     : 0;
+  const hasDiscount = product.originalPrice && product.originalPrice > product.price;
+  const discountPercent = hasDiscount
+    ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)
+    : 0;
 
   return (
     <main className="bg-[#FBF3E9] min-h-screen">
       <section className="max-w-5xl mx-auto px-6 py-16 grid md:grid-cols-2 gap-12">
+        {/* Product Image Gallery */}
         <div>
           <div className="relative aspect-square bg-[#F0CBA3] rounded-2xl overflow-hidden flex items-center justify-center">
+            {hasDiscount && (
+              <span className="absolute top-3 left-3 z-10 bg-[#C1653A] text-white text-sm font-semibold px-3 py-1.5 rounded-full">
+                {discountPercent}% OFF
+              </span>
+            )}
+
             {images.length > 0 ? (
               <img
                 onClick={openZoom}
@@ -201,6 +218,7 @@ export default function ProductDetailPage() {
               <span className="text-[#8B6F5C]">No image</span>
             )}
 
+            {/* Zoom hint badge — makes the zoom feature discoverable */}
             {images.length > 0 && (
               <button
                 type="button"
@@ -215,6 +233,7 @@ export default function ProductDetailPage() {
               </button>
             )}
 
+            {/* Prev/Next arrows — only shown when there's more than one photo */}
             {images.length > 1 && (
               <>
                 <button
@@ -236,6 +255,7 @@ export default function ProductDetailPage() {
                   </svg>
                 </button>
 
+                {/* Image counter */}
                 <span className="absolute bottom-3 right-3 bg-black/50 text-white text-xs px-2 py-1 rounded-full">
                   {activeImage + 1} / {images.length}
                 </span>
@@ -243,6 +263,7 @@ export default function ProductDetailPage() {
             )}
           </div>
 
+          {/* Thumbnail strip — only shown when there's more than one photo */}
           {images.length > 1 && (
             <div className="flex gap-3 mt-4">
               {images.map((img, index) => (
@@ -269,6 +290,7 @@ export default function ProductDetailPage() {
           )}
         </div>
 
+        {/* Product Info */}
         <div>
           <h1 className="font-[family-name:var(--font-playfair)] text-3xl text-[#6B4530] mb-3">
             {product.name}
@@ -287,9 +309,22 @@ export default function ProductDetailPage() {
           <p className="text-[#8B6F5C] mb-6 whitespace-pre-line">
             {product.description}
           </p>
-          <p className="text-2xl font-semibold text-[#6B4530] mb-6">
-            Rs. {product.price}
-          </p>
+
+          <div className="flex items-center gap-3 mb-6 flex-wrap">
+            <p className="text-2xl font-semibold text-[#6B4530]">
+              Rs. {product.price}
+            </p>
+            {hasDiscount && (
+              <>
+                <p className="text-lg text-[#8B6F5C] line-through">
+                  Rs. {product.originalPrice}
+                </p>
+                <span className="bg-[#C1653A] text-white text-xs font-semibold px-2.5 py-1 rounded-full">
+                  {discountPercent}% OFF
+                </span>
+              </>
+            )}
+          </div>
 
           <div className="flex items-center gap-3 mb-6">
             <span className="text-[#6B4530]">Quantity:</span>
@@ -325,7 +360,9 @@ export default function ProductDetailPage() {
         </div>
       </section>
 
+      {/* FAQs + Reviews */}
       <section className="max-w-5xl mx-auto px-6 pb-20">
+        {/* FAQs */}
         {faqs.length > 0 && (
           <div className="mb-14">
             <h2 className="font-[family-name:var(--font-playfair)] text-2xl text-[#6B4530] mb-6">
@@ -352,6 +389,7 @@ export default function ProductDetailPage() {
           </div>
         )}
 
+        {/* Reviews */}
         <div>
           <h2 className="font-[family-name:var(--font-playfair)] text-2xl text-[#6B4530] mb-6">
             Customer Reviews
@@ -382,6 +420,7 @@ export default function ProductDetailPage() {
             </div>
           )}
 
+          {/* Add a review */}
           <div className="bg-white border border-[#E5D5C3] rounded-2xl p-6 max-w-lg">
             <h3 className="font-medium text-[#6B4530] mb-4">
               Write a Review
@@ -451,11 +490,13 @@ export default function ProductDetailPage() {
         </div>
       </section>
 
+      {/* Zoom Lightbox */}
       {zoomOpen && images.length > 0 && (
         <div
           className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center"
           onClick={closeZoom}
         >
+          {/* Close button */}
           <button
             type="button"
             onClick={closeZoom}
@@ -467,6 +508,7 @@ export default function ProductDetailPage() {
             </svg>
           </button>
 
+          {/* Prev/Next inside the lightbox, if there's more than one photo */}
           {images.length > 1 && (
             <>
               <button
@@ -498,6 +540,8 @@ export default function ProductDetailPage() {
             </>
           )}
 
+          {/* Zoomable image — click toggles zoomed in/out, cursor position
+              controls where the zoom centers on */}
           <div
             className="relative max-w-[90vw] max-h-[90vh] overflow-hidden"
             onClick={(e) => e.stopPropagation()}

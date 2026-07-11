@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useEffect, useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
@@ -45,7 +45,7 @@ function ShopContent() {
   const getActiveIndex = (productId) => activeImageIndices[productId] || 0;
 
   // preventDefault + stopPropagation are both needed here since these
-  // buttons sit inside the card's <Link> â€” without them, clicking an
+  // buttons sit inside the card's <Link> — without them, clicking an
   // arrow would also navigate to the product page.
   const handlePrevImage = (e, productId, length) => {
     e.preventDefault();
@@ -143,6 +143,16 @@ function ShopContent() {
             {products.map((product) => {
               const images = product.images || [];
               const activeIndex = getActiveIndex(product._id);
+              const hasDiscount =
+                product.originalPrice &&
+                product.originalPrice > product.price;
+              const discountPercent = hasDiscount
+                ? Math.round(
+                    ((product.originalPrice - product.price) /
+                      product.originalPrice) *
+                      100
+                  )
+                : 0;
 
               return (
                 <Link
@@ -151,17 +161,23 @@ function ShopContent() {
                   className="group bg-white border border-[#E5D5C3] rounded-2xl overflow-hidden hover:shadow-lg transition flex flex-col"
                 >
                   <div className="relative aspect-square bg-[#F0CBA3] flex items-center justify-center overflow-hidden">
+                    {hasDiscount && (
+                      <span className="absolute top-2 left-2 z-10 bg-[#C1653A] text-white text-xs font-semibold px-2.5 py-1 rounded-full">
+                        {discountPercent}% OFF
+                      </span>
+                    )}
+
                     {images.length > 0 ? (
                       <img
                         src={images[activeIndex]}
-                        alt={`${product.name}${images.length > 1 ? ` â€” design ${activeIndex + 1}` : ""}`}
+                        alt={`${product.name}${images.length > 1 ? ` — design ${activeIndex + 1}` : ""}`}
                         className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
                       />
                     ) : (
                       <span className="text-[#8B6F5C] text-sm">No image</span>
                     )}
 
-                    {/* Prev/Next + dots â€” only shown when this product has
+                    {/* Prev/Next + dots — only shown when this product has
                         more than one photo saved */}
                     {images.length > 1 && (
                       <>
@@ -203,9 +219,16 @@ function ShopContent() {
                     <h3 className="text-[#6B4530] font-bold text-base md:text-lg leading-snug line-clamp-1">
                       {product.name}
                     </h3>
-                    <p className="text-[#6B4530] font-semibold text-base md:text-lg mt-1.5">
-                      Rs. {product.price}
-                    </p>
+                    <div className="flex items-center gap-2 mt-1.5 flex-wrap">
+                      <p className="text-[#6B4530] font-semibold text-base md:text-lg">
+                        Rs. {product.price}
+                      </p>
+                      {hasDiscount && (
+                        <p className="text-[#8B6F5C] text-sm line-through">
+                          Rs. {product.originalPrice}
+                        </p>
+                      )}
+                    </div>
                   </div>
                 </Link>
               );

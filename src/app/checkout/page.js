@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -12,7 +12,6 @@ export default function CheckoutPage() {
     codExtraCharge: 0,
     deliveryCharge: 300,
   });
-  const [paymentMethod, setPaymentMethod] = useState("card");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
 
@@ -44,7 +43,7 @@ export default function CheckoutPage() {
 
   const subtotal = cart.reduce((sum, item) => sum + item.price * item.qty, 0);
   const taxAmount = (subtotal * (settings.taxPercentage || 0)) / 100;
-  const codCharge = paymentMethod === "cod" ? settings.codExtraCharge || 0 : 0;
+  const codCharge = settings.codExtraCharge || 0;
   const deliveryCharge = settings.deliveryCharge ?? 300;
   const total = subtotal + taxAmount + codCharge + deliveryCharge;
 
@@ -77,51 +76,19 @@ export default function CheckoutPage() {
         customer: form,
         items: orderItems,
         totalAmount: total,
-        paymentMethod,
+        paymentMethod: "cod",
       };
       localStorage.setItem("mitti_last_order", JSON.stringify(orderSummary));
 
-      if (paymentMethod === "cod") {
-        await api.post("/api/orders", {
-          customer: form,
-          items: orderItems,
-          totalAmount: total,
-          paymentMethod: "cod",
-        });
+      await api.post("/api/orders", {
+        customer: form,
+        items: orderItems,
+        totalAmount: total,
+        paymentMethod: "cod",
+      });
 
-        localStorage.removeItem("mitti_cart");
-        router.push("/order-confirmation?success=true&method=cod");
-      } else {
-        // Create the order first and capture its real MongoDB _id.
-        const orderRes = await api.post("/api/orders", {
-          customer: form,
-          items: orderItems,
-          totalAmount: total,
-          paymentMethod: "stripe",
-        });
-
-        const orderId = orderRes.data._id;
-
-        // IMPORTANT: only productId and qty are sent for the Stripe session.
-        // The backend looks up real prices (and the delivery charge) from
-        // the database — never trust prices coming from the browser/cart
-        // for anything that charges money.
-        const stripeItems = orderItems.map((item) => ({
-          productId: item.productId,
-          qty: item.qty,
-        }));
-
-        // orderId is sent so Stripe can tag the payment session with it.
-        // When Stripe confirms payment via webhook, this is how our
-        // backend knows which order to mark as paid.
-        const res = await api.post("/api/payment/checkout", {
-          items: stripeItems,
-          orderId,
-        });
-
-        localStorage.removeItem("mitti_cart");
-        window.location.href = res.data.url;
-      }
+      localStorage.removeItem("mitti_cart");
+      router.push("/order-confirmation?success=true&method=cod");
     } catch (err) {
       console.error(err);
       setError("Something went wrong. Please try again.");
@@ -181,30 +148,25 @@ export default function CheckoutPage() {
               className="w-full px-4 py-3 border border-[#E5D5C3] rounded-lg text-[#6B4530] bg-white"
             />
 
-            <h2 className="text-xl font-semibold text-[#6B4530] pt-4 mb-2">
-              Payment Method
-            </h2>
-            <div className="space-y-3">
-              <label className="flex items-center gap-3 bg-white border border-[#E5D5C3] rounded-lg p-4 cursor-pointer">
-                <input
-                  type="radio"
-                  name="paymentMethod"
-                  checked={paymentMethod === "card"}
-                  onChange={() => setPaymentMethod("card")}
-                />
-                <span className="text-[#6B4530]">Credit / Debit Card (Stripe)</span>
-              </label>
-              <label className="flex items-center gap-3 bg-white border border-[#E5D5C3] rounded-lg p-4 cursor-pointer">
-                <input
-                  type="radio"
-                  name="paymentMethod"
-                  checked={paymentMethod === "cod"}
-                  onChange={() => setPaymentMethod("cod")}
-                />
-                <span className="text-[#6B4530]">
-                  Cash on Delivery {settings.codExtraCharge > 0 && `(+Rs. ${settings.codExtraCharge})`}
-                </span>
-              </label>
+            <div className="bg-white border border-[#E5D5C3] rounded-lg p-4 flex items-center gap-3">
+              <svg
+                className="w-6 h-6 text-[#6B4530] flex-shrink-0"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.8"
+              >
+                <rect x="2" y="6" width="20" height="12" rx="2" />
+                <path d="M2 10h20" />
+                <path d="M6 15h4" />
+              </svg>
+              <div>
+                <p className="text-[#6B4530] font-medium">Cash on Delivery</p>
+                <p className="text-[#8B6F5C] text-sm">
+                  Pay in cash when your order arrives
+                  {codCharge > 0 && ` (+Rs. ${codCharge})`}
+                </p>
+              </div>
             </div>
 
             {error && <p className="text-red-600 text-sm">{error}</p>}
@@ -226,11 +188,16 @@ export default function CheckoutPage() {
           </h2>
           <div className="bg-white border border-[#E5D5C3] rounded-2xl p-6 space-y-4">
             {cart.map((item) => (
-              <div key={item.productId} className="flex justify-between text-sm">
+              <div
+                key={item.productId}
+                className="flex justify-between text-sm"
+              >
                 <span className="text-[#6B4530]">
                   {item.name} x{item.qty}
                 </span>
-                <span className="text-[#6B4530]">Rs. {item.price * item.qty}</span>
+                <span className="text-[#6B4530]">
+                  Rs. {item.price * item.qty}
+                </span>
               </div>
             ))}
 
@@ -248,8 +215,12 @@ export default function CheckoutPage() {
 
             {settings.taxPercentage > 0 && (
               <div className="flex justify-between text-sm">
-                <span className="text-[#8B6F5C]">Tax ({settings.taxPercentage}%)</span>
-                <span className="text-[#6B4530]">Rs. {taxAmount.toFixed(0)}</span>
+                <span className="text-[#8B6F5C]">
+                  Tax ({settings.taxPercentage}%)
+                </span>
+                <span className="text-[#6B4530]">
+                  Rs. {taxAmount.toFixed(0)}
+                </span>
               </div>
             )}
 

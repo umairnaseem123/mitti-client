@@ -65,6 +65,9 @@ export default function AdminOrdersPage() {
           <Link href="/admin/orders" className="block px-4 py-2 rounded-lg bg-[#F0CBA3] text-[#6B4530] font-medium">
             Orders
           </Link>
+          <Link href="/admin/subscribers" className="block px-4 py-2 rounded-lg text-[#6B4530] hover:bg-[#F0CBA3] transition">
+            Subscribers
+          </Link>
           <Link href="/admin/settings" className="block px-4 py-2 rounded-lg text-[#6B4530] hover:bg-[#F0CBA3] transition">
             Settings
           </Link>
