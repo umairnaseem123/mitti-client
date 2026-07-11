@@ -1,8 +1,9 @@
-"use client";
+﻿"use client";
 
 import { useState } from "react";
 import Link from "next/link";
 import api from "@/lib/api";
+import AdminSidebar from "@/components/AdminSidebar";
 
 const emptyForm = {
   name: "",
@@ -26,9 +27,6 @@ export default function AddProductPage() {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  // Uploads every selected file one at a time to the existing single-file
-  // upload endpoint, and collects all the resulting URLs. This lets one
-  // product have several design photos without needing any backend changes.
   const handleImageUpload = async (e) => {
     const files = Array.from(e.target.files || []);
     if (files.length === 0) return;
@@ -130,28 +128,10 @@ export default function AddProductPage() {
 
   return (
     <div className="min-h-screen bg-[#FBF3E9] flex">
-      <aside className="w-64 bg-white border-r border-[#E5D5C3] p-6 hidden md:block">
-        <h2 className="font-[family-name:var(--font-playfair)] text-2xl text-[#6B4530] mb-1">
-          Mitti Admin
-        </h2>
-        <nav className="space-y-2 mt-8">
-          <Link href="/admin/dashboard" className="block px-4 py-2 rounded-lg text-[#6B4530] hover:bg-[#F0CBA3] transition">
-            Dashboard
-          </Link>
-          <Link href="/admin/products" className="block px-4 py-2 rounded-lg bg-[#F0CBA3] text-[#6B4530] font-medium">
-            Products
-          </Link>
-          <Link href="/admin/orders" className="block px-4 py-2 rounded-lg text-[#6B4530] hover:bg-[#F0CBA3] transition">
-            Orders
-          </Link>
-          <Link href="/admin/settings" className="block px-4 py-2 rounded-lg text-[#6B4530] hover:bg-[#F0CBA3] transition">
-            Settings
-          </Link>
-        </nav>
-      </aside>
+      <AdminSidebar active="/admin/products" />
 
-      <main className="flex-1 p-8 max-w-2xl">
-        <div className="flex items-center justify-between mb-8">
+      <main className="flex-1 p-6 md:p-8 pt-20 md:pt-8 max-w-2xl">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 mb-8">
           <h1 className="font-[family-name:var(--font-playfair)] text-3xl text-[#6B4530]">
             Add New Product
           </h1>
@@ -189,7 +169,7 @@ export default function AddProductPage() {
             className="w-full px-4 py-3 border border-[#E5D5C3] rounded-lg text-[#6B4530] bg-white"
           />
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <input
               type="number"
               name="price"

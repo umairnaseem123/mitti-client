@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import api from "@/lib/api";
+import AdminSidebar from "@/components/AdminSidebar";
 
 export default function ProductsListPage() {
   const router = useRouter();
@@ -48,31 +49,10 @@ export default function ProductsListPage() {
 
   return (
     <div className="min-h-screen bg-[#FBF3E9] flex">
-      <aside className="w-64 bg-white border-r border-[#E5D5C3] p-6 hidden md:block">
-        <h2 className="font-[family-name:var(--font-playfair)] text-2xl text-[#6B4530] mb-1">
-          Mitti Admin
-        </h2>
-        <nav className="space-y-2 mt-8">
-          <Link href="/admin/dashboard" className="block px-4 py-2 rounded-lg text-[#6B4530] hover:bg-[#F0CBA3] transition">
-            Dashboard
-          </Link>
-          <Link href="/admin/products" className="block px-4 py-2 rounded-lg bg-[#F0CBA3] text-[#6B4530] font-medium">
-            Products
-          </Link>
-          <Link href="/admin/orders" className="block px-4 py-2 rounded-lg text-[#6B4530] hover:bg-[#F0CBA3] transition">
-            Orders
-          </Link>
-          <Link href="/admin/subscribers" className="block px-4 py-2 rounded-lg text-[#6B4530] hover:bg-[#F0CBA3] transition">
-            Subscribers
-          </Link>
-          <Link href="/admin/settings" className="block px-4 py-2 rounded-lg text-[#6B4530] hover:bg-[#F0CBA3] transition">
-            Settings
-          </Link>
-        </nav>
-      </aside>
+      <AdminSidebar active="/admin/products" />
 
-      <main className="flex-1 p-8">
-        <div className="flex justify-between items-center mb-8">
+      <main className="flex-1 p-6 md:p-8 pt-20 md:pt-8">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
           <h1 className="font-[family-name:var(--font-playfair)] text-3xl text-[#6B4530]">
             Products
           </h1>
@@ -91,8 +71,8 @@ export default function ProductsListPage() {
         ) : products.length === 0 ? (
           <p className="text-[#8B6F5C]">No products yet.</p>
         ) : (
-          <div className="bg-white rounded-lg border border-[#E5D5C3] overflow-hidden">
-            <table className="w-full text-left">
+          <div className="bg-white rounded-lg border border-[#E5D5C3] overflow-x-auto">
+            <table className="w-full text-left min-w-[600px]">
               <thead className="bg-[#F0CBA3] text-[#6B4530]">
                 <tr>
                   <th className="px-4 py-3">Image</th>

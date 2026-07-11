@@ -1,8 +1,6 @@
 import "./globals.css";
 import { Playfair_Display, Inter } from "next/font/google";
-import Navbar from "@/components/Navbar";
-import Footer from "@/components/Footer";
-import WhatsAppButton from "@/components/WhatsAppButton";
+import SiteChrome from "@/components/SiteChrome";
 
 const playfair = Playfair_Display({
   subsets: ["latin"],
@@ -23,10 +21,7 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en">
       <body className={`${playfair.variable} ${inter.variable} bg-[#FBF3E9]`}>
-        <Navbar />
-        {children}
-        <Footer />
-        <WhatsAppButton />
+        <SiteChrome>{children}</SiteChrome>
       </body>
     </html>
   );

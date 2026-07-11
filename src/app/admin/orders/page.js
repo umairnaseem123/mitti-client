@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
 import api from "@/lib/api";
+import AdminSidebar from "@/components/AdminSidebar";
 
 export default function AdminOrdersPage() {
   const router = useRouter();
@@ -40,7 +40,7 @@ export default function AdminOrdersPage() {
       await api.put(
         `/api/orders/${orderId}`,
         { orderStatus: newStatus },
-        { headers: { Authorization: `Bearer ${token}` } }
+        { headers: { Authorization: `Bearer ${token}` } },
       );
       fetchOrders(token);
     } catch (error) {
@@ -51,30 +51,9 @@ export default function AdminOrdersPage() {
 
   return (
     <div className="min-h-screen bg-[#FBF3E9] flex">
-      <aside className="w-64 bg-white border-r border-[#E5D5C3] p-6 hidden md:block">
-        <h2 className="font-[family-name:var(--font-playfair)] text-2xl text-[#6B4530] mb-1">
-          Mitti Admin
-        </h2>
-        <nav className="space-y-2 mt-8">
-          <Link href="/admin/dashboard" className="block px-4 py-2 rounded-lg text-[#6B4530] hover:bg-[#F0CBA3] transition">
-            Dashboard
-          </Link>
-          <Link href="/admin/products" className="block px-4 py-2 rounded-lg text-[#6B4530] hover:bg-[#F0CBA3] transition">
-            Products
-          </Link>
-          <Link href="/admin/orders" className="block px-4 py-2 rounded-lg bg-[#F0CBA3] text-[#6B4530] font-medium">
-            Orders
-          </Link>
-          <Link href="/admin/subscribers" className="block px-4 py-2 rounded-lg text-[#6B4530] hover:bg-[#F0CBA3] transition">
-            Subscribers
-          </Link>
-          <Link href="/admin/settings" className="block px-4 py-2 rounded-lg text-[#6B4530] hover:bg-[#F0CBA3] transition">
-            Settings
-          </Link>
-        </nav>
-      </aside>
+      <AdminSidebar active="/admin/orders" />
 
-      <main className="flex-1 p-8">
+      <main className="flex-1 p-6 md:p-8 pt-20 md:pt-8">
         <h1 className="font-[family-name:var(--font-playfair)] text-3xl text-[#6B4530] mb-8">
           Orders
         </h1>
@@ -86,7 +65,10 @@ export default function AdminOrdersPage() {
         ) : (
           <div className="space-y-4">
             {orders.map((order) => (
-              <div key={order._id} className="bg-white border border-[#E5D5C3] rounded-2xl p-6">
+              <div
+                key={order._id}
+                className="bg-white border border-[#E5D5C3] rounded-2xl p-6"
+              >
                 <div className="flex flex-wrap items-start justify-between gap-4 mb-4">
                   <div>
                     <p className="font-semibold text-[#6B4530]">
@@ -112,7 +94,8 @@ export default function AdminOrdersPage() {
                 <div className="border-t border-[#E5D5C3] pt-4 mb-4">
                   {order.items.map((item, idx) => (
                     <p key={idx} className="text-sm text-[#6B4530]">
-                      {item.name} x{item.qty} &mdash; Rs. {item.price * item.qty}
+                      {item.name} x{item.qty} &mdash; Rs.{" "}
+                      {item.price * item.qty}
                     </p>
                   ))}
                 </div>
@@ -121,7 +104,9 @@ export default function AdminOrdersPage() {
                   <label className="text-sm text-[#8B6F5C]">Status:</label>
                   <select
                     value={order.orderStatus}
-                    onChange={(e) => handleStatusChange(order._id, e.target.value)}
+                    onChange={(e) =>
+                      handleStatusChange(order._id, e.target.value)
+                    }
                     className="px-3 py-2 border border-[#E5D5C3] rounded-lg text-[#6B4530] text-sm"
                   >
                     <option value="pending">Pending</option>

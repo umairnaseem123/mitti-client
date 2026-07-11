@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
 import api from "@/lib/api";
+import AdminSidebar from "@/components/AdminSidebar";
 
 export default function AdminSettingsPage() {
   const router = useRouter();
@@ -30,7 +30,7 @@ export default function AdminSettingsPage() {
       setTaxPercentage(res.data.taxPercentage || 0);
       setCodExtraCharge(res.data.codExtraCharge || 0);
       setDeliveryCharge(
-        res.data.deliveryCharge !== undefined ? res.data.deliveryCharge : 300
+        res.data.deliveryCharge !== undefined ? res.data.deliveryCharge : 300,
       );
     } catch (error) {
       console.error("Error fetching settings:", error);
@@ -53,7 +53,7 @@ export default function AdminSettingsPage() {
           codExtraCharge: Number(codExtraCharge),
           deliveryCharge: Number(deliveryCharge),
         },
-        { headers: { Authorization: `Bearer ${token}` } }
+        { headers: { Authorization: `Bearer ${token}` } },
       );
       setMessage("Settings saved successfully!");
       setTimeout(() => setMessage(""), 3000);
@@ -67,47 +67,9 @@ export default function AdminSettingsPage() {
 
   return (
     <div className="min-h-screen bg-[#FBF3E9] flex">
-      {/* Sidebar */}
-      <aside className="w-64 bg-white border-r border-[#E5D5C3] p-6 hidden md:block">
-        <h2 className="font-[family-name:var(--font-playfair)] text-2xl text-[#6B4530] mb-1">
-          Mitti Admin
-        </h2>
-        <nav className="space-y-2 mt-8">
-          <Link
-            href="/admin/dashboard"
-            className="block px-4 py-2 rounded-lg text-[#6B4530] hover:bg-[#F0CBA3] transition"
-          >
-            Dashboard
-          </Link>
-          <Link
-            href="/admin/products"
-            className="block px-4 py-2 rounded-lg text-[#6B4530] hover:bg-[#F0CBA3] transition"
-          >
-            Products
-          </Link>
-          <Link
-            href="/admin/orders"
-            className="block px-4 py-2 rounded-lg text-[#6B4530] hover:bg-[#F0CBA3] transition"
-          >
-            Orders
-          </Link>
-          <Link
-            href="/admin/subscribers"
-            className="block px-4 py-2 rounded-lg text-[#6B4530] hover:bg-[#F0CBA3] transition"
-          >
-            Subscribers
-          </Link>
-          <Link
-            href="/admin/settings"
-            className="block px-4 py-2 rounded-lg bg-[#F0CBA3] text-[#6B4530] font-medium"
-          >
-            Settings
-          </Link>
-        </nav>
-      </aside>
+      <AdminSidebar active="/admin/settings" />
 
-      {/* Main Content */}
-      <main className="flex-1 p-8 max-w-xl">
+      <main className="flex-1 p-6 md:p-8 pt-20 md:pt-8 max-w-xl">
         <h1 className="font-[family-name:var(--font-playfair)] text-3xl text-[#6B4530] mb-8">
           Settings
         </h1>
