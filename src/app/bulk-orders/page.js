@@ -1,30 +1,41 @@
-﻿import Link from "next/link";
+import Link from "next/link";
 
 const WHATSAPP_NUMBER = "923290175894";
-const WHATSAPP_MESSAGE = encodeURIComponent(
-  "Hi Mitti! I'm interested in a bulk / corporate order. Could you share more details?"
-);
+
+const buildWhatsAppLink = (message) =>
+  `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`;
+
+const DEFAULT_MESSAGE =
+  "Hi Mitti! I'm interested in a bulk / corporate order. Could you share more details?";
 
 const occasions = [
   {
     title: "Weddings",
     description: "Personalized favors and decor pieces for your big day.",
     emoji: "\u{1F48D}",
+    message:
+      "Hi Mitti! I'm interested in a bulk order for a wedding. Could you share more details?",
   },
   {
     title: "Corporate Gifting",
     description: "Branded, thoughtful gifts for clients, partners, and teams.",
     emoji: "\u{1F454}",
+    message:
+      "Hi Mitti! I'm interested in a bulk order for corporate gifting. Could you share more details?",
   },
   {
     title: "Events & Favors",
     description: "Baby showers, birthdays, and celebrations of every size.",
     emoji: "\u{1F389}",
+    message:
+      "Hi Mitti! I'm interested in a bulk order for an event / party favors. Could you share more details?",
   },
   {
     title: "Custom Orders",
     description: "Have something specific in mind? We'll work with you on it.",
     emoji: "\u2728",
+    message:
+      "Hi Mitti! I have a custom order in mind. Could we discuss the details?",
   },
 ];
 
@@ -47,7 +58,7 @@ const steps = [
 ];
 
 export default function BulkOrdersPage() {
-  const whatsappLink = `https://wa.me/${WHATSAPP_NUMBER}?text=${WHATSAPP_MESSAGE}`;
+  const whatsappLink = buildWhatsAppLink(DEFAULT_MESSAGE);
 
   return (
     <main className="bg-[#FBF3E9]">
@@ -68,11 +79,17 @@ export default function BulkOrdersPage() {
         <h2 className="font-[family-name:var(--font-playfair)] text-2xl md:text-3xl text-[#6B4530] text-center mb-12">
           What We Help With
         </h2>
+        <p className="text-[#8B6F5C] text-sm text-center -mt-8 mb-10">
+          Tap any card below to start a conversation on WhatsApp for that occasion.
+        </p>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-5">
           {occasions.map((occasion) => (
-            <div
+            <a
               key={occasion.title}
-              className="bg-white border border-[#E5D5C3] rounded-2xl p-6 text-center"
+              href={buildWhatsAppLink(occasion.message)}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="bg-white border border-[#E5D5C3] rounded-2xl p-6 text-center hover:border-[#6B4530] hover:shadow-md transition cursor-pointer"
             >
               <div className="text-3xl mb-3">{occasion.emoji}</div>
               <h3 className="text-[#6B4530] font-semibold mb-2">
@@ -81,7 +98,7 @@ export default function BulkOrdersPage() {
               <p className="text-[#8B6F5C] text-sm leading-relaxed">
                 {occasion.description}
               </p>
-            </div>
+            </a>
           ))}
         </div>
       </section>
@@ -116,7 +133,9 @@ export default function BulkOrdersPage() {
         <p className="text-[#8B6F5C] mb-8">
           Message us on WhatsApp with your occasion, quantity, and timeline
           &mdash; we&apos;ll take it from there.
-        </p><a href={whatsappLink}
+        </p>
+        <a
+          href={whatsappLink}
           target="_blank"
           rel="noopener noreferrer"
           className="inline-flex items-center gap-2 bg-[#25D366] text-white px-8 py-3.5 rounded-full font-medium hover:bg-[#1ebc59] transition"
