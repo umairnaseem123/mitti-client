@@ -44,8 +44,23 @@ export default function AdminOrdersPage() {
       );
       fetchOrders(token);
     } catch (error) {
-      console.error("Error updating order:", error);
+      console.error("Error updating order status:", error);
       alert("Failed to update order status.");
+    }
+  };
+
+  const handlePaymentStatusChange = async (orderId, newPaymentStatus) => {
+    try {
+      const token = localStorage.getItem("mitti_admin_token");
+      await api.put(
+        `/api/orders/${orderId}`,
+        { paymentStatus: newPaymentStatus },
+        { headers: { Authorization: `Bearer ${token}` } },
+      );
+      fetchOrders(token);
+    } catch (error) {
+      console.error("Error updating payment status:", error);
+      alert("Failed to update payment status.");
     }
   };
 
@@ -105,19 +120,48 @@ export default function AdminOrdersPage() {
                   ))}
                 </div>
 
-                <div className="flex items-center gap-3">
-                  <label className="text-sm text-[#8B6F5C]">Status:</label>
-                  <select
-                    value={order.orderStatus}
-                    onChange={(e) =>
-                      handleStatusChange(order._id, e.target.value)
-                    }
-                    className="px-3 py-2 border border-[#E5D5C3] rounded-lg text-[#6B4530] text-sm"
-                  >
-                    <option value="pending">Pending</option>
-                    <option value="shipped">Shipped</option>
-                    <option value="delivered">Delivered</option>
-                  </select>
+                <div className="flex flex-wrap items-center gap-4">
+                  <div className="flex items-center gap-3">
+                    <label className="text-sm text-[#8B6F5C]">
+                      Order Status:
+                    </label>
+                    <select
+                      value={order.orderStatus}
+                      onChange={(e) =>
+                        handleStatusChange(order._id, e.target.value)
+                      }
+                      className="px-3 py-2 border border-[#E5D5C3] rounded-lg text-[#6B4530] text-sm"
+                    >
+                      <option value="pending">Pending</option>
+                      <option value="shipped">Shipped</option>
+                      <option value="delivered">Delivered</option>
+                    </select>
+                  </div>
+
+                  {order.paymentMethod !== "cod" && (
+                    <div className="flex items-center gap-3">
+                      <label className="text-sm text-[#8B6F5C]">
+                        Payment Status:
+                      </label>
+                      <select
+                        value={order.paymentStatus}
+                        onChange={(e) =>
+                          handlePaymentStatusChange(order._id, e.target.value)
+                        }
+                        className={`px-3 py-2 border rounded-lg text-sm font-medium ${
+                          order.paymentStatus === "paid"
+                            ? "border-green-300 text-green-700 bg-green-50"
+                            : order.paymentStatus === "failed"
+                              ? "border-red-300 text-red-700 bg-red-50"
+                              : "border-[#E5D5C3] text-[#6B4530]"
+                        }`}
+                      >
+                        <option value="pending">Pending</option>
+                        <option value="paid">Paid</option>
+                        <option value="failed">Failed</option>
+                      </select>
+                    </div>
+                  )}
                 </div>
               </div>
             ))}
