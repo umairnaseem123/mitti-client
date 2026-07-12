@@ -1,6 +1,6 @@
 ﻿"use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import Link from "next/link";
 import api from "@/lib/api";
 import AdminSidebar from "@/components/AdminSidebar";
@@ -22,6 +22,7 @@ export default function AddProductPage() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [fileInputKey, setFileInputKey] = useState(0);
+  const fileInputRef = useRef(null);
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -86,7 +87,7 @@ export default function AddProductPage() {
       Number(form.originalPrice) <= Number(form.price)
     ) {
       setError(
-        "Original Price must be higher than the current Price for a discount to show."
+        "Original Price must be higher than the current Price for a discount to show.",
       );
       return;
     }
@@ -101,19 +102,19 @@ export default function AddProductPage() {
           name: form.name,
           description: form.description,
           price: Number(form.price),
-          originalPrice: form.originalPrice
-            ? Number(form.originalPrice)
-            : null,
+          originalPrice: form.originalPrice ? Number(form.originalPrice) : null,
           category: form.category,
           stock: Number(form.stock),
           images: form.imageUrls,
         },
         {
           headers: { Authorization: `Bearer ${token}` },
-        }
+        },
       );
 
-      setSuccess(`"${form.name}" added successfully! Add the next product below.`);
+      setSuccess(
+        `"${form.name}" added successfully! Add the next product below.`,
+      );
       setForm(emptyForm);
       setFileInputKey((k) => k + 1);
 
@@ -189,9 +190,9 @@ export default function AddProductPage() {
             />
           </div>
           <p className="text-xs text-[#8B6F5C] -mt-2">
-            Fill Original Price only if this item is on sale — it must be
-            higher than the Price above. It will show struck-through with a
-            % OFF badge.
+            Fill Original Price only if this item is on sale — it must be higher
+            than the Price above. It will show struck-through with a % OFF
+            badge.
           </p>
 
           <select
@@ -217,24 +218,55 @@ export default function AddProductPage() {
             <label className="block text-sm text-[#8B6F5C] mb-1">
               Product Photos
             </label>
-            <p className="text-xs text-[#8B6F5C] mb-2">
-              If this item comes in different designs or colors, select all
-              of them at once — customers will be able to flip between them
-              on the product page.
+            <p className="text-xs text-[#8B6F5C] mb-3">
+              If this item comes in different designs or colors, select all of
+              them at once — customers will be able to flip between them on the
+              product page.
             </p>
+
+            {/* Hidden native file input, triggered by the styled button below */}
             <input
               key={fileInputKey}
+              ref={fileInputRef}
               type="file"
               accept="image/png, image/jpeg, image/webp, image/gif"
               onChange={handleImageUpload}
               multiple
-              className="w-full text-[#6B4530] text-sm"
+              className="hidden"
             />
-            {uploading && (
-              <p className="text-sm text-[#8B6F5C] mt-2">Uploading...</p>
-            )}
+
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={uploading}
+              className="w-full flex items-center justify-center gap-2 border-2 border-dashed border-[#D9B48A] rounded-lg py-6 text-[#6B4530] font-medium hover:bg-[#FBF3E9] hover:border-[#6B4530] transition disabled:opacity-50"
+            >
+              <svg
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+              >
+                <rect x="3" y="3" width="18" height="18" rx="2" />
+                <circle cx="8.5" cy="8.5" r="1.5" />
+                <path
+                  d="M21 15l-5-5L5 21"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+                <path
+                  d="M17 3v6M14 6h6"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+              {uploading ? "Uploading..." : "+ Add Images"}
+            </button>
+
             {form.imageUrls.length > 0 && (
-              <div className="flex flex-wrap gap-3 mt-3">
+              <div className="flex flex-wrap gap-3 mt-4">
                 {form.imageUrls.map((url, index) => (
                   <div key={index} className="relative">
                     <img

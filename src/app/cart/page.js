@@ -17,19 +17,23 @@ export default function CartPage() {
     setCart(stored);
   };
 
+  const saveCart = (updated) => {
+    setCart(updated);
+    localStorage.setItem("mitti_cart", JSON.stringify(updated));
+    window.dispatchEvent(new Event("cartUpdated"));
+  };
+
   const updateQty = (productId, newQty) => {
     if (newQty < 1) return;
     const updated = cart.map((item) =>
       item.productId === productId ? { ...item, qty: newQty } : item
     );
-    setCart(updated);
-    localStorage.setItem("mitti_cart", JSON.stringify(updated));
+    saveCart(updated);
   };
 
   const removeItem = (productId) => {
     const updated = cart.filter((item) => item.productId !== productId);
-    setCart(updated);
-    localStorage.setItem("mitti_cart", JSON.stringify(updated));
+    saveCart(updated);
   };
 
   const subtotal = cart.reduce((sum, item) => sum + item.price * item.qty, 0);
