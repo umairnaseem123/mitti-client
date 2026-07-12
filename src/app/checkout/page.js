@@ -2,18 +2,17 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+
 import api from "@/lib/api";
+import { Truck } from "lucide-react";
 
 export default function CheckoutPage() {
   const router = useRouter();
   const [cart, setCart] = useState([]);
-  const [settings, setSettings] = useState({
-    taxPercentage: 0,
-    codExtraCharge: 0,
-    deliveryCharge: 300,
-  });
+  const [settings, setSettings] = useState(null);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
+  const [paymentMethod, setPaymentMethod] = useState("cod"); // "cod" | "easypaisa" | "jazzcash"
 
   const [form, setForm] = useState({
     name: "",
@@ -34,6 +33,7 @@ export default function CheckoutPage() {
       setSettings(res.data);
     } catch (error) {
       console.error("Error fetching settings:", error);
+      setSettings({ taxPercentage: 0, codExtraCharge: 0, deliveryCharge: 300 });
     }
   };
 
@@ -41,10 +41,16 @@ export default function CheckoutPage() {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
+  const isOnlinePayment = paymentMethod !== "cod";
+
   const subtotal = cart.reduce((sum, item) => sum + item.price * item.qty, 0);
-  const taxAmount = (subtotal * (settings.taxPercentage || 0)) / 100;
-  const codCharge = settings.codExtraCharge || 0;
-  const deliveryCharge = settings.deliveryCharge ?? 300;
+  const taxAmount = settings
+    ? (subtotal * (settings.taxPercentage || 0)) / 100
+    : 0;
+  const codCharge = !isOnlinePayment ? settings?.codExtraCharge || 0 : 0;
+  const deliveryCharge = isOnlinePayment
+    ? 0
+    : (settings?.deliveryCharge ?? 300);
   const total = subtotal + taxAmount + codCharge + deliveryCharge;
 
   const handleSubmit = async (e) => {
@@ -71,12 +77,11 @@ export default function CheckoutPage() {
         qty: item.qty,
       }));
 
-      // Save order summary so the confirmation page can build a WhatsApp message
       const orderSummary = {
         customer: form,
         items: orderItems,
         totalAmount: total,
-        paymentMethod: "cod",
+        paymentMethod,
       };
       localStorage.setItem("mitti_last_order", JSON.stringify(orderSummary));
 
@@ -84,11 +89,11 @@ export default function CheckoutPage() {
         customer: form,
         items: orderItems,
         totalAmount: total,
-        paymentMethod: "cod",
+        paymentMethod,
       });
 
       localStorage.removeItem("mitti_cart");
-      router.push("/order-confirmation?success=true&method=cod");
+      router.push(`/order-confirmation?success=true&method=${paymentMethod}`);
     } catch (err) {
       console.error(err);
       setError("Something went wrong. Please try again.");
@@ -148,32 +153,128 @@ export default function CheckoutPage() {
               className="w-full px-4 py-3 border border-[#E5D5C3] rounded-lg text-[#6B4530] bg-white"
             />
 
-            <div className="bg-white border border-[#E5D5C3] rounded-lg p-4 flex items-center gap-3">
-              <svg
-                className="w-6 h-6 text-[#6B4530] flex-shrink-0"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1.8"
+            {/* Payment Method Selection */}
+            <div className="space-y-3">
+              <p className="text-[#6B4530] font-medium">Payment Method</p>
+
+              {/* COD Option */}
+              <label
+                className={`block bg-white border rounded-lg p-4 cursor-pointer transition ${
+                  paymentMethod === "cod"
+                    ? "border-[#6B4530] ring-1 ring-[#6B4530]"
+                    : "border-[#E5D5C3]"
+                }`}
               >
-                <rect x="2" y="6" width="20" height="12" rx="2" />
-                <path d="M2 10h20" />
-                <path d="M6 15h4" />
-              </svg>
-              <div>
-                <p className="text-[#6B4530] font-medium">Cash on Delivery</p>
-                <p className="text-[#8B6F5C] text-sm">
-                  Pay in cash when your order arrives
-                  {codCharge > 0 && ` (+Rs. ${codCharge})`}
-                </p>
-              </div>
+                <div className="flex items-center gap-3">
+                  <input
+                    type="radio"
+                    name="paymentMethod"
+                    checked={paymentMethod === "cod"}
+                    onChange={() => setPaymentMethod("cod")}
+                    className="accent-[#6B4530]"
+                  />
+                  <div>
+                    <p className="text-[#6B4530] font-medium">
+                      Cash on Delivery
+                    </p>
+                    <p className="text-[#8B6F5C] text-sm">
+                      Pay in cash when your order arrives
+                      {settings?.codExtraCharge > 0 &&
+                        ` (+Rs. ${settings.codExtraCharge})`}
+                    </p>
+                  </div>
+                </div>
+              </label>
+
+              {/* Easypaisa Option */}
+              <label
+                className={`block bg-white border rounded-lg p-4 cursor-pointer transition ${
+                  paymentMethod === "easypaisa"
+                    ? "border-[#6B4530] ring-1 ring-[#6B4530]"
+                    : "border-[#E5D5C3]"
+                }`}
+              >
+                <div className="flex items-center gap-3">
+                  <input
+                    type="radio"
+                    name="paymentMethod"
+                    checked={paymentMethod === "easypaisa"}
+                    onChange={() => setPaymentMethod("easypaisa")}
+                    className="accent-[#6B4530]"
+                  />
+                  <div>
+                    <p className="text-[#6B4530] font-medium">
+                      Easypaisa (Online Payment)
+                    </p>
+                    <p className="text-green-700 text-sm font-medium flex items-center gap-1">
+                      <Truck size={14} /> Free Shipping
+                    </p>
+                  </div>
+                </div>
+              </label>
+
+              {/* JazzCash Option */}
+              <label
+                className={`block bg-white border rounded-lg p-4 cursor-pointer transition ${
+                  paymentMethod === "jazzcash"
+                    ? "border-[#6B4530] ring-1 ring-[#6B4530]"
+                    : "border-[#E5D5C3]"
+                }`}
+              >
+                <div className="flex items-center gap-3">
+                  <input
+                    type="radio"
+                    name="paymentMethod"
+                    checked={paymentMethod === "jazzcash"}
+                    onChange={() => setPaymentMethod("jazzcash")}
+                    className="accent-[#6B4530]"
+                  />
+                  <div>
+                    <p className="text-[#6B4530] font-medium">
+                      JazzCash (Online Payment)
+                    </p>
+                    <p className="text-green-700 text-sm font-medium flex items-center gap-1">
+                      <Truck size={14} /> Free Shipping
+                    </p>
+                  </div>
+                </div>
+              </label>
+
+              {/* QR Code Display */}
+              {isOnlinePayment && (
+                <div className="bg-white border border-[#E5D5C3] rounded-lg p-6 text-center">
+                  <p className="text-[#6B4530] font-medium mb-4">
+                    Scan the QR code below to pay via{" "}
+                    {paymentMethod === "easypaisa" ? "Easypaisa" : "JazzCash"}
+                  </p>
+                  <div className="flex justify-center mb-4">
+                    <img
+                      src={
+                        paymentMethod === "easypaisa"
+                          ? "/easypaisa-qr.jpg"
+                          : "/jazzcash-qr.jpg"
+                      }
+                      alt={`${paymentMethod} QR Code`}
+                      width={220}
+                      height={220}
+                      className="rounded-lg border border-[#E5D5C3]"
+                    />
+                  </div>
+                  <p className="text-[#8B6F5C] text-sm">
+                    Scan this QR code using{" "}
+                    {paymentMethod === "easypaisa" ? "Easypaisa" : "JazzCash"}{" "}
+                    app, complete the payment, then send a screenshot on
+                    WhatsApp to confirm your order.
+                  </p>
+                </div>
+              )}
             </div>
 
             {error && <p className="text-red-600 text-sm">{error}</p>}
 
             <button
               type="submit"
-              disabled={submitting}
+              disabled={submitting || !settings}
               className="w-full bg-[#6B4530] text-white py-4 rounded-full font-medium hover:bg-[#8B6F5C] transition disabled:opacity-50 mt-4"
             >
               {submitting ? "Processing..." : "Place Order"}
@@ -203,40 +304,52 @@ export default function CheckoutPage() {
 
             <hr className="border-[#E5D5C3]" />
 
-            <div className="flex justify-between text-sm">
-              <span className="text-[#8B6F5C]">Subtotal</span>
-              <span className="text-[#6B4530]">Rs. {subtotal}</span>
-            </div>
+            {!settings ? (
+              <p className="text-[#8B6F5C] text-sm text-center py-4">
+                Loading order summary...
+              </p>
+            ) : (
+              <>
+                <div className="flex justify-between text-sm">
+                  <span className="text-[#8B6F5C]">Subtotal</span>
+                  <span className="text-[#6B4530]">Rs. {subtotal}</span>
+                </div>
 
-            <div className="flex justify-between text-sm">
-              <span className="text-[#8B6F5C]">Delivery Charge</span>
-              <span className="text-[#6B4530]">Rs. {deliveryCharge}</span>
-            </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-[#8B6F5C]">Delivery Charge</span>
+                  {isOnlinePayment ? (
+                    <span className="text-green-700 font-medium">FREE</span>
+                  ) : (
+                    <span className="text-[#6B4530]">Rs. {deliveryCharge}</span>
+                  )}
+                </div>
 
-            {settings.taxPercentage > 0 && (
-              <div className="flex justify-between text-sm">
-                <span className="text-[#8B6F5C]">
-                  Tax ({settings.taxPercentage}%)
-                </span>
-                <span className="text-[#6B4530]">
-                  Rs. {taxAmount.toFixed(0)}
-                </span>
-              </div>
+                {settings.taxPercentage > 0 && (
+                  <div className="flex justify-between text-sm">
+                    <span className="text-[#8B6F5C]">
+                      Tax ({settings.taxPercentage}%)
+                    </span>
+                    <span className="text-[#6B4530]">
+                      Rs. {taxAmount.toFixed(0)}
+                    </span>
+                  </div>
+                )}
+
+                {codCharge > 0 && (
+                  <div className="flex justify-between text-sm">
+                    <span className="text-[#8B6F5C]">COD Charge</span>
+                    <span className="text-[#6B4530]">Rs. {codCharge}</span>
+                  </div>
+                )}
+
+                <hr className="border-[#E5D5C3]" />
+
+                <div className="flex justify-between text-lg font-semibold">
+                  <span className="text-[#6B4530]">Total</span>
+                  <span className="text-[#6B4530]">Rs. {total.toFixed(0)}</span>
+                </div>
+              </>
             )}
-
-            {codCharge > 0 && (
-              <div className="flex justify-between text-sm">
-                <span className="text-[#8B6F5C]">COD Charge</span>
-                <span className="text-[#6B4530]">Rs. {codCharge}</span>
-              </div>
-            )}
-
-            <hr className="border-[#E5D5C3]" />
-
-            <div className="flex justify-between text-lg font-semibold">
-              <span className="text-[#6B4530]">Total</span>
-              <span className="text-[#6B4530]">Rs. {total.toFixed(0)}</span>
-            </div>
           </div>
         </div>
       </section>
