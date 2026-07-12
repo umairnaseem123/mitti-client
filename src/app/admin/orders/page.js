@@ -88,6 +88,11 @@ export default function AdminOrdersPage() {
                     <p className="text-sm text-[#8B6F5C] uppercase">
                       {order.paymentMethod} &bull; {order.paymentStatus}
                     </p>
+                    {order.transactionId && (
+                      <p className="text-xs text-[#8B6F5C] mt-1">
+                        TXN: {order.transactionId}
+                      </p>
+                    )}
                   </div>
                 </div>
 

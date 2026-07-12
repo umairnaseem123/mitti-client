@@ -1,10 +1,9 @@
-﻿"use client";
+"use client";
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-
-import api from "@/lib/api";
 import { Truck } from "lucide-react";
+import api from "@/lib/api";
 
 export default function CheckoutPage() {
   const router = useRouter();
@@ -13,6 +12,7 @@ export default function CheckoutPage() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
   const [paymentMethod, setPaymentMethod] = useState("cod"); // "cod" | "easypaisa" | "jazzcash"
+  const [transactionId, setTransactionId] = useState("");
 
   const [form, setForm] = useState({
     name: "",
@@ -44,14 +44,15 @@ export default function CheckoutPage() {
   const isOnlinePayment = paymentMethod !== "cod";
 
   const subtotal = cart.reduce((sum, item) => sum + item.price * item.qty, 0);
-  const taxAmount = settings
-    ? (subtotal * (settings.taxPercentage || 0)) / 100
-    : 0;
+  const taxAmount = settings ? (subtotal * (settings.taxPercentage || 0)) / 100 : 0;
   const codCharge = !isOnlinePayment ? settings?.codExtraCharge || 0 : 0;
-  const deliveryCharge = isOnlinePayment
-    ? 0
-    : (settings?.deliveryCharge ?? 300);
+  const deliveryCharge = isOnlinePayment ? 0 : (settings?.deliveryCharge ?? 300);
   const total = subtotal + taxAmount + codCharge + deliveryCharge;
+
+  const handlePaymentMethodChange = (method) => {
+    setPaymentMethod(method);
+    setTransactionId(""); // reset transaction ID whenever method changes
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -64,6 +65,13 @@ export default function CheckoutPage() {
 
     if (cart.length === 0) {
       setError("Your cart is empty.");
+      return;
+    }
+
+    if (isOnlinePayment && !transactionId.trim()) {
+      setError(
+        "Please enter your Transaction ID / Reference Number from the payment app to place your order.",
+      );
       return;
     }
 
@@ -82,6 +90,7 @@ export default function CheckoutPage() {
         items: orderItems,
         totalAmount: total,
         paymentMethod,
+        transactionId: isOnlinePayment ? transactionId.trim() : null,
       };
       localStorage.setItem("mitti_last_order", JSON.stringify(orderSummary));
 
@@ -90,6 +99,7 @@ export default function CheckoutPage() {
         items: orderItems,
         totalAmount: total,
         paymentMethod,
+        transactionId: isOnlinePayment ? transactionId.trim() : null,
       });
 
       localStorage.removeItem("mitti_cart");
@@ -170,13 +180,11 @@ export default function CheckoutPage() {
                     type="radio"
                     name="paymentMethod"
                     checked={paymentMethod === "cod"}
-                    onChange={() => setPaymentMethod("cod")}
+                    onChange={() => handlePaymentMethodChange("cod")}
                     className="accent-[#6B4530]"
                   />
                   <div>
-                    <p className="text-[#6B4530] font-medium">
-                      Cash on Delivery
-                    </p>
+                    <p className="text-[#6B4530] font-medium">Cash on Delivery</p>
                     <p className="text-[#8B6F5C] text-sm">
                       Pay in cash when your order arrives
                       {settings?.codExtraCharge > 0 &&
@@ -199,7 +207,7 @@ export default function CheckoutPage() {
                     type="radio"
                     name="paymentMethod"
                     checked={paymentMethod === "easypaisa"}
-                    onChange={() => setPaymentMethod("easypaisa")}
+                    onChange={() => handlePaymentMethodChange("easypaisa")}
                     className="accent-[#6B4530]"
                   />
                   <div>
@@ -226,7 +234,7 @@ export default function CheckoutPage() {
                     type="radio"
                     name="paymentMethod"
                     checked={paymentMethod === "jazzcash"}
-                    onChange={() => setPaymentMethod("jazzcash")}
+                    onChange={() => handlePaymentMethodChange("jazzcash")}
                     className="accent-[#6B4530]"
                   />
                   <div>
@@ -240,7 +248,7 @@ export default function CheckoutPage() {
                 </div>
               </label>
 
-              {/* QR Code Display */}
+              {/* QR Code Display + Transaction ID */}
               {isOnlinePayment && (
                 <div className="bg-white border border-[#E5D5C3] rounded-lg p-6 text-center">
                   <p className="text-[#6B4530] font-medium mb-4">
@@ -260,12 +268,30 @@ export default function CheckoutPage() {
                       className="rounded-lg border border-[#E5D5C3]"
                     />
                   </div>
-                  <p className="text-[#8B6F5C] text-sm">
+                  <p className="text-[#8B6F5C] text-sm mb-5">
                     Scan this QR code using{" "}
                     {paymentMethod === "easypaisa" ? "Easypaisa" : "JazzCash"}{" "}
-                    app, complete the payment, then send a screenshot on
-                    WhatsApp to confirm your order.
+                    app and complete the payment. After paying, enter the
+                    Transaction ID / Reference Number from your payment
+                    receipt below to place your order.
                   </p>
+
+                  <div className="text-left">
+                    <label className="block text-[#6B4530] font-medium mb-2 text-sm">
+                      Transaction ID / Reference Number
+                    </label>
+                    <input
+                      type="text"
+                      value={transactionId}
+                      onChange={(e) => setTransactionId(e.target.value)}
+                      placeholder="e.g. 52604598358"
+                      className="w-full px-4 py-3 border border-[#E5D5C3] rounded-lg text-[#6B4530] bg-white"
+                    />
+                    <p className="text-xs text-[#8B6F5C] mt-1">
+                      This is found in your payment app&apos;s transaction
+                      receipt, right after you complete the payment.
+                    </p>
+                  </div>
                 </div>
               )}
             </div>
