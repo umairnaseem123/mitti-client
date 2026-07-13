@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
@@ -25,6 +25,8 @@ export default function ProductDetailPage() {
   const [qty, setQty] = useState(1);
   const [added, setAdded] = useState(false);
   const [activeImage, setActiveImage] = useState(0);
+  const [linkCopied, setLinkCopied] = useState(false);
+  const [pageUrl, setPageUrl] = useState("");
 
   // Zoom lightbox state
   const [zoomOpen, setZoomOpen] = useState(false);
@@ -45,6 +47,10 @@ export default function ProductDetailPage() {
     if (id) fetchProduct();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
+
+  useEffect(() => {
+    setPageUrl(window.location.href);
+  }, []);
 
   // Let the Escape key close the zoom lightbox, and disable page scroll
   // while it's open so the background doesn't move behind it.
@@ -170,6 +176,16 @@ export default function ProductDetailPage() {
     }
   };
 
+  const handleCopyLink = async () => {
+    try {
+      await navigator.clipboard.writeText(pageUrl);
+      setLinkCopied(true);
+      setTimeout(() => setLinkCopied(false), 2000);
+    } catch (err) {
+      console.error("Could not copy link:", err);
+    }
+  };
+
   if (loading) {
     return (
       <main className="bg-[#FBF3E9] min-h-screen flex items-center justify-center">
@@ -191,13 +207,14 @@ export default function ProductDetailPage() {
   const averageRating = reviews.length
     ? reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length
     : 0;
-  const hasDiscount =
-    product.originalPrice && product.originalPrice > product.price;
+  const hasDiscount = product.originalPrice && product.originalPrice > product.price;
   const discountPercent = hasDiscount
-    ? Math.round(
-        ((product.originalPrice - product.price) / product.originalPrice) * 100,
-      )
+    ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)
     : 0;
+
+  const shareText = `Check out ${product.name} on Mitti!`;
+  const whatsappShareLink = `https://wa.me/?text=${encodeURIComponent(`${shareText} ${pageUrl}`)}`;
+  const facebookShareLink = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(pageUrl)}`;
 
   return (
     <main className="bg-[#FBF3E9] min-h-screen">
@@ -230,20 +247,9 @@ export default function ProductDetailPage() {
                 aria-label="Zoom in on photo"
                 className="absolute bottom-3 left-3 w-9 h-9 rounded-full bg-white/85 hover:bg-white text-[#6B4530] flex items-center justify-center shadow-md transition z-10"
               >
-                <svg
-                  width="16"
-                  height="16"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <circle cx="11" cy="11" r="7" />
-                  <path
-                    d="M21 21l-4.3-4.3M11 8v6M8 11h6"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
+                  <path d="M21 21l-4.3-4.3M11 8v6M8 11h6" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
               </button>
             )}
@@ -256,19 +262,8 @@ export default function ProductDetailPage() {
                   aria-label="Previous design"
                   className="absolute left-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/85 hover:bg-white text-[#6B4530] flex items-center justify-center shadow-md transition"
                 >
-                  <svg
-                    width="20"
-                    height="20"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                  >
-                    <path
-                      d="M15 18l-6-6 6-6"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M15 18l-6-6 6-6" strokeLinecap="round" strokeLinejoin="round" />
                   </svg>
                 </button>
                 <button
@@ -276,19 +271,8 @@ export default function ProductDetailPage() {
                   aria-label="Next design"
                   className="absolute right-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/85 hover:bg-white text-[#6B4530] flex items-center justify-center shadow-md transition"
                 >
-                  <svg
-                    width="20"
-                    height="20"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                  >
-                    <path
-                      d="M9 18l6-6-6-6"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M9 18l6-6-6-6" strokeLinecap="round" strokeLinejoin="round" />
                   </svg>
                 </button>
 
@@ -380,7 +364,7 @@ export default function ProductDetailPage() {
             </button>
           </div>
 
-          <div className="flex gap-4">
+          <div className="flex gap-4 mb-6">
             <button
               onClick={handleAddToCart}
               className="bg-[#6B4530] text-white px-8 py-3 rounded-full font-medium hover:bg-[#8B6F5C] transition"
@@ -393,6 +377,58 @@ export default function ProductDetailPage() {
             >
               View Cart
             </Link>
+          </div>
+
+          {/* Social sharing */}
+          <div className="flex items-center gap-3">
+            <span className="text-sm text-[#8B6F5C]">Share:</span>
+
+            <a
+              href={whatsappShareLink}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="Share on WhatsApp"
+              className="w-9 h-9 rounded-full bg-white border border-[#E5D5C3] flex items-center justify-center text-[#6B4530] hover:bg-[#25D366] hover:border-[#25D366] hover:text-white transition"
+            >
+              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.29.173-1.414-.074-.124-.272-.198-.57-.347z" />
+                <path d="M12.001 2C6.478 2 2 6.477 2 12c0 1.88.525 3.638 1.436 5.135L2 22l4.995-1.312A9.953 9.953 0 0012 22c5.523 0 10-4.477 10-10S17.523 2 12.001 2zm0 18.001a7.96 7.96 0 01-4.276-1.24l-.307-.183-3.006.79.803-2.933-.2-.302A7.96 7.96 0 014 12c0-4.411 3.589-8 8.001-8 4.411 0 8 3.589 8 8s-3.589 8.001-8 8.001z" />
+              </svg>
+            </a>
+
+            <a
+              href={facebookShareLink}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="Share on Facebook"
+              className="w-9 h-9 rounded-full bg-white border border-[#E5D5C3] flex items-center justify-center text-[#6B4530] hover:bg-[#1877F2] hover:border-[#1877F2] hover:text-white transition"
+            >
+              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M22 12c0-5.523-4.477-10-10-10S2 6.477 2 12c0 4.991 3.657 9.128 8.438 9.878v-6.987h-2.54V12h2.54V9.797c0-2.506 1.492-3.89 3.777-3.89 1.094 0 2.238.195 2.238.195v2.46h-1.26c-1.243 0-1.63.771-1.63 1.562V12h2.773l-.443 2.891h-2.33v6.987C18.343 21.128 22 16.991 22 12z" />
+              </svg>
+            </a>
+
+            <button
+              type="button"
+              onClick={handleCopyLink}
+              aria-label="Copy product link"
+              className="w-9 h-9 rounded-full bg-white border border-[#E5D5C3] flex items-center justify-center text-[#6B4530] hover:bg-[#6B4530] hover:border-[#6B4530] hover:text-white transition"
+            >
+              {linkCopied ? (
+                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M20 6L9 17l-5-5" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              ) : (
+                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+                  <path d="M10 13a5 5 0 007.07 0l2.83-2.83a5 5 0 00-7.07-7.07l-1.5 1.5" strokeLinecap="round" strokeLinejoin="round" />
+                  <path d="M14 11a5 5 0 00-7.07 0L4.1 13.83a5 5 0 007.07 7.07l1.5-1.5" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              )}
+            </button>
+
+            {linkCopied && (
+              <span className="text-xs text-green-700">Link copied!</span>
+            )}
           </div>
         </div>
       </section>
@@ -459,7 +495,9 @@ export default function ProductDetailPage() {
 
           {/* Add a review */}
           <div className="bg-white border border-[#E5D5C3] rounded-2xl p-6 max-w-lg">
-            <h3 className="font-medium text-[#6B4530] mb-4">Write a Review</h3>
+            <h3 className="font-medium text-[#6B4530] mb-4">
+              Write a Review
+            </h3>
             <form onSubmit={handleReviewSubmit} className="space-y-4">
               <input
                 type="text"
@@ -538,19 +576,8 @@ export default function ProductDetailPage() {
             aria-label="Close zoom view"
             className="absolute top-5 right-5 w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition z-10"
           >
-            <svg
-              width="20"
-              height="20"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-            >
-              <path
-                d="M18 6L6 18M6 6l12 12"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M18 6L6 18M6 6l12 12" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
           </button>
 
@@ -566,19 +593,8 @@ export default function ProductDetailPage() {
                 aria-label="Previous design"
                 className="absolute left-5 top-1/2 -translate-y-1/2 w-11 h-11 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition z-10"
               >
-                <svg
-                  width="22"
-                  height="22"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                >
-                  <path
-                    d="M15 18l-6-6 6-6"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M15 18l-6-6 6-6" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
               </button>
               <button
@@ -590,19 +606,8 @@ export default function ProductDetailPage() {
                 aria-label="Next design"
                 className="absolute right-5 top-1/2 -translate-y-1/2 w-11 h-11 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition z-10"
               >
-                <svg
-                  width="22"
-                  height="22"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                >
-                  <path
-                    d="M9 18l6-6-6-6"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M9 18l6-6-6-6" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
               </button>
             </>
