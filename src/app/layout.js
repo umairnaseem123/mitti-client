@@ -13,9 +13,44 @@ const inter = Inter({
 });
 
 export const metadata = {
-  title: "Mitti | Handmade Gifts & Decor",
+  metadataBase: new URL("https://mitti-client.vercel.app"),
+  title: {
+    default: "Mitti | Handmade Gifts & Decor",
+    template: "%s | Mitti",
+  },
   description:
-    "Where every space feels alive. Handmade concrete and candle decor by Aliza & Muniba.",
+    "Handmade concrete decor and candles crafted in Pakistan. Unique home decor, wedding favors, and corporate gifts by Aliza & Muniba. Free shipping on online payments.",
+  keywords: [
+    "handmade candles Pakistan",
+    "concrete decor Pakistan",
+    "handmade gifts Karachi",
+    "wedding favors Pakistan",
+    "corporate gifts Pakistan",
+    "home decor Pakistan",
+  ],
+  openGraph: {
+    title: "Mitti | Handmade Gifts & Decor",
+    description:
+      "Handmade concrete decor and candles crafted in Pakistan. Where every space feels alive.",
+    url: "https://mitti-client.vercel.app",
+    siteName: "Mitti",
+    images: [
+      {
+        url: "/logo2.png",
+        width: 800,
+        height: 800,
+        alt: "Mitti - Handmade Gifts & Decor",
+      },
+    ],
+    locale: "en_PK",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Mitti | Handmade Gifts & Decor",
+    description: "Handmade concrete decor and candles crafted in Pakistan.",
+    images: ["/logo2.png"],
+  },
 };
 
 export default function RootLayout({ children }) {

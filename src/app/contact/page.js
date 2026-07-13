@@ -1,3 +1,9 @@
+export const metadata = {
+  title: "Contact Us | Mitti",
+  description:
+    "Get in touch with Mitti on Instagram, Facebook, or WhatsApp. Handmade concrete decor and candles, delivered across Pakistan.",
+};
+
 export default function Contact() {
   return (
     <main className="bg-[#FBF3E9]">

@@ -1,5 +1,9 @@
 import Link from "next/link";
-
+export const metadata = {
+  title: "Bulk & Corporate Gifting",
+  description:
+    "Handmade concrete decor and candles crafted in bulk for weddings, corporate gifting, and events. Get a custom quote on WhatsApp.",
+};
 const WHATSAPP_NUMBER = "923290175894";
 
 const buildWhatsAppLink = (message) =>
@@ -43,17 +47,20 @@ const steps = [
   {
     step: "01",
     title: "Tell us what you need",
-    description: "Reach out on WhatsApp with your occasion, quantity, and timeline.",
+    description:
+      "Reach out on WhatsApp with your occasion, quantity, and timeline.",
   },
   {
     step: "02",
     title: "We put together a quote",
-    description: "We'll suggest pieces and pricing based on your budget and vision.",
+    description:
+      "We'll suggest pieces and pricing based on your budget and vision.",
   },
   {
     step: "03",
     title: "We craft and deliver",
-    description: "Every piece is handmade to order and delivered across Pakistan.",
+    description:
+      "Every piece is handmade to order and delivered across Pakistan.",
   },
 ];
 
@@ -80,7 +87,8 @@ export default function BulkOrdersPage() {
           What We Help With
         </h2>
         <p className="text-[#8B6F5C] text-sm text-center -mt-8 mb-10">
-          Tap any card below to start a conversation on WhatsApp for that occasion.
+          Tap any card below to start a conversation on WhatsApp for that
+          occasion.
         </p>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-5">
           {occasions.map((occasion) => (

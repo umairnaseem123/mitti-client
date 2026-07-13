@@ -1,5 +1,11 @@
 import Link from "next/link";
 
+export const metadata = {
+  title: "Our Story | Mitti — From Soil to Soul",
+  description:
+    "Mitti was founded in June 2025 by Aliza and Muniba, two teenage creators making handcrafted concrete decor and hand-poured candles in Karachi, Pakistan.",
+};
+
 export default function About() {
   return (
     <main className="bg-[#FBF3E9]">
