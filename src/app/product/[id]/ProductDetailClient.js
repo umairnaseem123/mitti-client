@@ -227,6 +227,7 @@ export default function ProductDetailClient() {
   const discountPercent = hasDiscount
     ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)
     : 0;
+  const isOutOfStock = !product.stock || product.stock <= 0;
 
   const shareText = `Check out ${product.name} on Mitti!`;
   const whatsappShareLink = `https://wa.me/?text=${encodeURIComponent(`${shareText} ${pageUrl}`)}`;
@@ -240,6 +241,12 @@ export default function ProductDetailClient() {
             {hasDiscount && (
               <span className="absolute top-3 left-3 z-10 bg-[#C1653A] text-white text-sm font-semibold px-3 py-1.5 rounded-full">
                 {discountPercent}% OFF
+              </span>
+            )}
+
+            {isOutOfStock && (
+              <span className="absolute top-3 right-3 z-10 bg-[#6B4530] text-white text-sm font-semibold px-3 py-1.5 rounded-full">
+                Out of Stock
               </span>
             )}
 
@@ -377,9 +384,11 @@ export default function ProductDetailClient() {
           <div className="flex gap-4 mb-6">
             <button
               onClick={handleAddToCart}
-              className="bg-[#6B4530] text-white px-8 py-3 rounded-full font-medium hover:bg-[#8B6F5C] transition"
+              disabled={isOutOfStock}
+              className={`bg-[#6B4530] text-white px-8 py-3 rounded-full font-medium transition ${isOutOfStock ? "opacity-50 cursor-not-allowed" : "hover:bg-[#8B6F5C]"}`}
+            
             >
-              {added ? `Added ${"\u2713"}` : "Add to Cart"}
+              {isOutOfStock ? "Out of Stock" : added ? `Added ${"\u2713"}` : "Add to Cart"}
             </button>
             <Link
               href="/cart"
@@ -695,4 +704,6 @@ export default function ProductDetailClient() {
     </main>
   );
 }
+
+
 

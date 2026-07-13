@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
@@ -14,9 +14,6 @@ function ShopContent() {
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState(initialCategory);
 
-  // Tracks which photo is currently showing per product card, e.g.
-  // { "<productId>": 1 }. Defaults to the first photo (index 0) for any
-  // product not yet touched.
   const [activeImageIndices, setActiveImageIndices] = useState({});
 
   useEffect(() => {
@@ -44,9 +41,6 @@ function ShopContent() {
 
   const getActiveIndex = (productId) => activeImageIndices[productId] || 0;
 
-  // preventDefault + stopPropagation are both needed here since these
-  // buttons sit inside the card's <Link> — without them, clicking an
-  // arrow would also navigate to the product page.
   const handlePrevImage = (e, productId, length) => {
     e.preventDefault();
     e.stopPropagation();
@@ -67,7 +61,6 @@ function ShopContent() {
 
   return (
     <main className="bg-[#FBF3E9] min-h-screen">
-      {/* Header */}
       <section className="bg-[#F0CBA3] py-16 px-6 text-center">
         <p className="text-sm tracking-widest text-[#8B6F5C] mb-3 uppercase">
           Our Collection
@@ -77,7 +70,6 @@ function ShopContent() {
         </h1>
       </section>
 
-      {/* Search + Filter Bar */}
       <section className="max-w-6xl mx-auto px-6 pt-10 pb-6 flex flex-col md:flex-row gap-4 items-center justify-between">
         <input
           type="text"
@@ -121,7 +113,6 @@ function ShopContent() {
         </div>
       </section>
 
-      {/* Result count */}
       {!loading && products.length > 0 && (
         <section className="max-w-6xl mx-auto px-6">
           <p className="text-sm text-[#8B6F5C] mb-4">
@@ -130,7 +121,6 @@ function ShopContent() {
         </section>
       )}
 
-      {/* Product Grid */}
       <section className="max-w-6xl mx-auto px-6 pb-24">
         {loading ? (
           <p className="text-center text-[#8B6F5C] py-20">Loading products...</p>
@@ -153,6 +143,7 @@ function ShopContent() {
                       100
                   )
                 : 0;
+              const isOutOfStock = !product.stock || product.stock <= 0;
 
               return (
                 <Link
@@ -161,24 +152,30 @@ function ShopContent() {
                   className="group bg-white border border-[#E5D5C3] rounded-2xl overflow-hidden hover:shadow-lg transition flex flex-col"
                 >
                   <div className="relative aspect-square bg-[#F0CBA3] flex items-center justify-center overflow-hidden">
-                    {hasDiscount && (
+                    {hasDiscount && !isOutOfStock && (
                       <span className="absolute top-2 left-2 z-10 bg-[#C1653A] text-white text-xs font-semibold px-2.5 py-1 rounded-full">
                         {discountPercent}% OFF
+                      </span>
+                    )}
+
+                    {isOutOfStock && (
+                      <span className="absolute top-2 right-2 z-10 bg-[#6B4530] text-white text-xs font-semibold px-2.5 py-1 rounded-full">
+                        Out of Stock
                       </span>
                     )}
 
                     {images.length > 0 ? (
                       <img
                         src={images[activeIndex]}
-                        alt={`${product.name}${images.length > 1 ? ` — design ${activeIndex + 1}` : ""}`}
-                        className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                        alt={`${product.name}${images.length > 1 ? ` design ${activeIndex + 1}` : ""}`}
+                        className={`w-full h-full object-cover transition-transform duration-300 group-hover:scale-105 ${
+                          isOutOfStock ? "opacity-50 grayscale" : ""
+                        }`}
                       />
                     ) : (
                       <span className="text-[#8B6F5C] text-sm">No image</span>
                     )}
 
-                    {/* Prev/Next + dots — only shown when this product has
-                        more than one photo saved */}
                     {images.length > 1 && (
                       <>
                         <button

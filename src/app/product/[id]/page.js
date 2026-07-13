@@ -1,5 +1,7 @@
 ﻿import ProductDetailClient from "./ProductDetailClient";
 
+export const dynamic = "force-dynamic";
+
 export async function generateMetadata({ params }) {
   const { id } = params;
 
@@ -36,3 +38,4 @@ export async function generateMetadata({ params }) {
 export default function ProductPage() {
   return <ProductDetailClient />;
 }
+
