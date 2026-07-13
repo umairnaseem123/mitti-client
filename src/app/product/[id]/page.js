@@ -27,6 +27,7 @@ export default function ProductDetailPage() {
   const [activeImage, setActiveImage] = useState(0);
   const [linkCopied, setLinkCopied] = useState(false);
   const [pageUrl, setPageUrl] = useState("");
+  const [relatedProducts, setRelatedProducts] = useState([]);
 
   // Zoom lightbox state
   const [zoomOpen, setZoomOpen] = useState(false);
@@ -51,6 +52,14 @@ export default function ProductDetailPage() {
   useEffect(() => {
     setPageUrl(window.location.href);
   }, []);
+
+  // Fetch related products from the same category once the product loads
+  useEffect(() => {
+    if (product?.category) {
+      fetchRelatedProducts(product.category, product._id);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [product?.category, product?._id]);
 
   // Let the Escape key close the zoom lightbox, and disable page scroll
   // while it's open so the background doesn't move behind it.
@@ -80,6 +89,20 @@ export default function ProductDetailPage() {
       setError("Could not load product.");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchRelatedProducts = async (category, currentProductId) => {
+    try {
+      const res = await api.get("/api/products", {
+        params: { category },
+      });
+      const filtered = res.data
+        .filter((p) => p._id !== currentProductId)
+        .slice(0, 4);
+      setRelatedProducts(filtered);
+    } catch (err) {
+      console.error("Error fetching related products:", err);
     }
   };
 
@@ -561,6 +584,64 @@ export default function ProductDetailPage() {
             </form>
           </div>
         </div>
+
+        {/* Related Products */}
+        {relatedProducts.length > 0 && (
+          <div className="mt-16">
+            <h2 className="font-[family-name:var(--font-playfair)] text-2xl text-[#6B4530] mb-6">
+              You May Also Like
+            </h2>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-5">
+              {relatedProducts.map((item) => {
+                const itemHasDiscount =
+                  item.originalPrice && item.originalPrice > item.price;
+                const itemDiscountPercent = itemHasDiscount
+                  ? Math.round(
+                      ((item.originalPrice - item.price) / item.originalPrice) * 100,
+                    )
+                  : 0;
+
+                return (
+                  <Link
+                    key={item._id}
+                    href={`/product/${item._id}`}
+                    className="bg-white border border-[#E5D5C3] rounded-xl overflow-hidden hover:shadow-md transition group"
+                  >
+                    <div className="relative aspect-square bg-[#F0CBA3] overflow-hidden">
+                      {itemHasDiscount && (
+                        <span className="absolute top-2 left-2 z-10 bg-[#C1653A] text-white text-xs font-semibold px-2 py-1 rounded-full">
+                          {itemDiscountPercent}% OFF
+                        </span>
+                      )}
+                      {item.images?.[0] ? (
+                        <img
+                          src={item.images[0]}
+                          alt={item.name}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        />
+                      ) : null}
+                    </div>
+                    <div className="p-3">
+                      <p className="text-[#6B4530] font-medium text-sm truncate">
+                        {item.name}
+                      </p>
+                      <div className="flex items-center gap-2 mt-1">
+                        <p className="text-[#6B4530] font-semibold text-sm">
+                          Rs. {item.price}
+                        </p>
+                        {itemHasDiscount && (
+                          <p className="text-[#8B6F5C] text-xs line-through">
+                            Rs. {item.originalPrice}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
+        )}
       </section>
 
       {/* Zoom Lightbox */}
