@@ -64,6 +64,14 @@ export default function AdminOrdersPage() {
     }
   };
 
+  const handleCopyId = async (orderId) => {
+    try {
+      await navigator.clipboard.writeText(orderId);
+    } catch (err) {
+      console.error("Could not copy order ID:", err);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-[#FBF3E9] flex">
       <AdminSidebar active="/admin/orders" />
@@ -86,6 +94,22 @@ export default function AdminOrdersPage() {
               >
                 <div className="flex flex-wrap items-start justify-between gap-4 mb-4">
                   <div>
+                    <div className="flex items-center gap-2 mb-1">
+                      <p className="text-sm text-[#6B4530] font-mono font-medium">
+                        {order._id}
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => handleCopyId(order._id)}
+                        aria-label="Copy order ID"
+                        className="text-[#8B6F5C] hover:text-[#6B4530] transition"
+                      >
+                        <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+                          <rect x="9" y="9" width="13" height="13" rx="2" />
+                          <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1" />
+                        </svg>
+                      </button>
+                    </div>
                     <p className="font-semibold text-[#6B4530]">
                       {order.customer.name}
                     </p>
@@ -171,3 +195,4 @@ export default function AdminOrdersPage() {
     </div>
   );
 }
+

@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 import Link from "next/link";
 import { useState, useRef, useEffect } from "react";
 
@@ -60,6 +60,9 @@ export default function Navbar() {
         </Link>
         <Link href="/contact" className="hover:text-[#8B6F5C] transition">
           Contact
+        </Link>
+        <Link href="/track-order" className="hover:text-[#8B6F5C] transition">
+          Track Order
         </Link>
 
         <div className="relative" ref={helpRef}>
@@ -217,6 +220,9 @@ export default function Navbar() {
           <Link href="/contact" onClick={() => setMenuOpen(false)}>
             Contact
           </Link>
+          <Link href="/track-order" onClick={() => setMenuOpen(false)}>
+            Track Order
+          </Link>
 
           <div className="pt-2 mt-2 border-t border-[#D9B48A] flex flex-col gap-4">
             <span className="text-xs uppercase tracking-widest text-[#8B6F5C]">
@@ -242,3 +248,4 @@ export default function Navbar() {
     </nav>
   );
 }
+

@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -94,13 +94,15 @@ export default function CheckoutPage() {
       };
       localStorage.setItem("mitti_last_order", JSON.stringify(orderSummary));
 
-      await api.post("/api/orders", {
+      const orderRes = await api.post("/api/orders", {
         customer: form,
         items: orderItems,
         totalAmount: total,
         paymentMethod,
         transactionId: isOnlinePayment ? transactionId.trim() : null,
       });
+      orderSummary._id = orderRes.data._id;
+      localStorage.setItem("mitti_last_order", JSON.stringify(orderSummary));
 
       localStorage.removeItem("mitti_cart");
       router.push(`/order-confirmation?success=true&method=${paymentMethod}`);
@@ -382,3 +384,4 @@ export default function CheckoutPage() {
     </main>
   );
 }
+
