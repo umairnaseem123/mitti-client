@@ -5,6 +5,10 @@ import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import api from "@/lib/api";
 
+function getWishlist() {
+  return JSON.parse(localStorage.getItem("mitti_wishlist") || "[]");
+}
+
 function ShopContent() {
   const searchParams = useSearchParams();
   const initialCategory = searchParams.get("category") || "";
@@ -13,6 +17,7 @@ function ShopContent() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState(initialCategory);
+  const [wishlist, setWishlist] = useState([]);
 
   const [activeImageIndices, setActiveImageIndices] = useState({});
 
@@ -20,6 +25,13 @@ function ShopContent() {
     fetchProducts();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [search, category]);
+
+  useEffect(() => {
+    setWishlist(getWishlist());
+    const syncWishlist = () => setWishlist(getWishlist());
+    window.addEventListener("wishlistUpdated", syncWishlist);
+    return () => window.removeEventListener("wishlistUpdated", syncWishlist);
+  }, []);
 
   const fetchProducts = async () => {
     setLoading(true);
@@ -58,6 +70,32 @@ function ShopContent() {
       return { ...prev, [productId]: current === length - 1 ? 0 : current + 1 };
     });
   };
+
+  const toggleWishlist = (e, product) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const current = getWishlist();
+    const exists = current.some((item) => item.productId === product._id);
+    let updated;
+    if (exists) {
+      updated = current.filter((item) => item.productId !== product._id);
+    } else {
+      updated = [
+        ...current,
+        {
+          productId: product._id,
+          name: product.name,
+          price: product.price,
+          image: product.images?.[0] || "",
+        },
+      ];
+    }
+    localStorage.setItem("mitti_wishlist", JSON.stringify(updated));
+    window.dispatchEvent(new Event("wishlistUpdated"));
+  };
+
+  const isWishlisted = (productId) =>
+    wishlist.some((item) => item.productId === productId);
 
   return (
     <main className="bg-[#FBF3E9] min-h-screen">
@@ -144,6 +182,7 @@ function ShopContent() {
                   )
                 : 0;
               const isOutOfStock = !product.stock || product.stock <= 0;
+              const wishlisted = isWishlisted(product._id);
 
               return (
                 <Link
@@ -163,6 +202,23 @@ function ShopContent() {
                         Out of Stock
                       </span>
                     )}
+
+                    <button
+                      type="button"
+                      onClick={(e) => toggleWishlist(e, product)}
+                      aria-label={wishlisted ? "Remove from wishlist" : "Add to wishlist"}
+                      className="absolute bottom-2 left-2 z-10 w-8 h-8 rounded-full bg-white/90 hover:bg-white flex items-center justify-center shadow transition"
+                    >
+                      <svg
+                        className={`w-4 h-4 ${wishlisted ? "text-[#C1653A]" : "text-[#6B4530]"}`}
+                        viewBox="0 0 24 24"
+                        fill={wishlisted ? "currentColor" : "none"}
+                        stroke="currentColor"
+                        strokeWidth="2"
+                      >
+                        <path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z" />
+                      </svg>
+                    </button>
 
                     {images.length > 0 ? (
                       <img

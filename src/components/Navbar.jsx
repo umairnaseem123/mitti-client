@@ -6,6 +6,7 @@ export default function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [helpOpen, setHelpOpen] = useState(false);
   const [cartCount, setCartCount] = useState(0);
+  const [wishlistCount, setWishlistCount] = useState(0);
   const helpRef = useRef(null);
 
   useEffect(() => {
@@ -36,6 +37,23 @@ export default function Navbar() {
     return () => {
       window.removeEventListener("cartUpdated", updateCartCount);
       window.removeEventListener("storage", updateCartCount);
+    };
+  }, []);
+
+  useEffect(() => {
+    const updateWishlistCount = () => {
+      const stored = JSON.parse(localStorage.getItem("mitti_wishlist") || "[]");
+      setWishlistCount(stored.length);
+    };
+
+    updateWishlistCount();
+
+    window.addEventListener("wishlistUpdated", updateWishlistCount);
+    window.addEventListener("storage", updateWishlistCount);
+
+    return () => {
+      window.removeEventListener("wishlistUpdated", updateWishlistCount);
+      window.removeEventListener("storage", updateWishlistCount);
     };
   }, []);
 
@@ -147,6 +165,29 @@ export default function Navbar() {
 
       <div className="flex items-center gap-5">
         <Link
+          href="/wish-list"
+          className="relative flex items-center gap-2 text-[#6B4530] font-medium hover:text-[#8B6F5C] transition"
+        >
+          <div className="relative">
+            <svg
+              className="w-5 h-5"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.8"
+            >
+              <path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z" />
+            </svg>
+            {wishlistCount > 0 && (
+              <span className="absolute -top-2 -right-2 bg-red-600 text-white text-[10px] font-semibold w-4 h-4 flex items-center justify-center rounded-full">
+                {wishlistCount > 9 ? "9+" : wishlistCount}
+              </span>
+            )}
+          </div>
+          <span className="hidden sm:inline">Wishlist</span>
+        </Link>
+
+        <Link
           href="/cart"
           className="relative flex items-center gap-2 text-[#6B4530] font-medium hover:text-[#8B6F5C] transition"
         >
@@ -223,6 +264,9 @@ export default function Navbar() {
           <Link href="/track-order" onClick={() => setMenuOpen(false)}>
             Track Order
           </Link>
+          <Link href="/wish-list" onClick={() => setMenuOpen(false)}>
+            Wishlist
+          </Link>
 
           <div className="pt-2 mt-2 border-t border-[#D9B48A] flex flex-col gap-4">
             <span className="text-xs uppercase tracking-widest text-[#8B6F5C]">
@@ -248,4 +292,3 @@ export default function Navbar() {
     </nav>
   );
 }
-
