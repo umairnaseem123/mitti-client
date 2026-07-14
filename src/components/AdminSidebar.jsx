@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
@@ -9,6 +9,7 @@ const navItems = [
   { href: "/admin/dashboard", label: "Dashboard" },
   { href: "/admin/products", label: "Products" },
   { href: "/admin/orders", label: "Orders" },
+  { href: "/admin/coupons", label: "Coupons" },
   { href: "/admin/subscribers", label: "Subscribers" },
   { href: "/admin/settings", label: "Settings" },
 ];
@@ -99,3 +100,4 @@ export default function AdminSidebar({ adminName }) {
     </>
   );
 }
+

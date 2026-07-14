@@ -13,6 +13,10 @@ export default function CheckoutPage() {
   const [error, setError] = useState("");
   const [paymentMethod, setPaymentMethod] = useState("cod"); // "cod" | "easypaisa" | "jazzcash"
   const [transactionId, setTransactionId] = useState("");
+  const [couponCode, setCouponCode] = useState("");
+  const [appliedCoupon, setAppliedCoupon] = useState(null);
+  const [couponError, setCouponError] = useState("");
+  const [applyingCoupon, setApplyingCoupon] = useState(false);
 
   const [form, setForm] = useState({
     name: "",
@@ -47,7 +51,36 @@ export default function CheckoutPage() {
   const taxAmount = settings ? (subtotal * (settings.taxPercentage || 0)) / 100 : 0;
   const codCharge = !isOnlinePayment ? settings?.codExtraCharge || 0 : 0;
   const deliveryCharge = isOnlinePayment ? 0 : (settings?.deliveryCharge ?? 300);
-  const total = subtotal + taxAmount + codCharge + deliveryCharge;
+  const discountAmount = appliedCoupon ? appliedCoupon.discountAmount : 0;
+  const total = subtotal + taxAmount + codCharge + deliveryCharge - discountAmount;
+
+  const handleApplyCoupon = async () => {
+    setCouponError("");
+    if (!couponCode.trim()) {
+      setCouponError("Please enter a coupon code.");
+      return;
+    }
+    setApplyingCoupon(true);
+    try {
+      const res = await api.post("/api/coupons/validate", {
+        code: couponCode.trim(),
+        subtotal,
+      });
+      setAppliedCoupon(res.data);
+    } catch (err) {
+      console.error("Error applying coupon:", err);
+      setCouponError(err.response?.data?.message || "Could not apply this coupon.");
+      setAppliedCoupon(null);
+    } finally {
+      setApplyingCoupon(false);
+    }
+  };
+
+  const handleRemoveCoupon = () => {
+    setAppliedCoupon(null);
+    setCouponCode("");
+    setCouponError("");
+  };
 
   const handlePaymentMethodChange = (method) => {
     setPaymentMethod(method);
@@ -330,6 +363,44 @@ export default function CheckoutPage() {
               </div>
             ))}
 
+            <div className="pt-2">
+              {!appliedCoupon ? (
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    placeholder="Coupon code"
+                    value={couponCode}
+                    onChange={(e) => setCouponCode(e.target.value)}
+                    className="flex-1 px-3 py-2 border border-[#E5D5C3] rounded-lg text-[#6B4530] bg-[#FBF3E9] text-sm uppercase"
+                  />
+                  <button
+                    type="button"
+                    onClick={handleApplyCoupon}
+                    disabled={applyingCoupon}
+                    className="px-4 py-2 rounded-lg border border-[#6B4530] text-[#6B4530] text-sm font-medium hover:bg-[#FBF3E9] transition disabled:opacity-50"
+                  >
+                    {applyingCoupon ? "Checking..." : "Apply"}
+                  </button>
+                </div>
+              ) : (
+                <div className="flex items-center justify-between bg-green-50 border border-green-200 rounded-lg px-3 py-2">
+                  <p className="text-sm text-green-700 font-medium">
+                    {appliedCoupon.code} applied
+                  </p>
+                  <button
+                    type="button"
+                    onClick={handleRemoveCoupon}
+                    className="text-xs text-green-700 underline"
+                  >
+                    Remove
+                  </button>
+                </div>
+              )}
+              {couponError && (
+                <p className="text-red-600 text-xs mt-1">{couponError}</p>
+              )}
+            </div>
+
             <hr className="border-[#E5D5C3]" />
 
             {!settings ? (
@@ -370,6 +441,13 @@ export default function CheckoutPage() {
                   </div>
                 )}
 
+                {discountAmount > 0 && (
+                  <div className="flex justify-between text-sm">
+                    <span className="text-green-700">Discount</span>
+                    <span className="text-green-700">-Rs. {discountAmount.toFixed(0)}</span>
+                  </div>
+                )}
+
                 <hr className="border-[#E5D5C3]" />
 
                 <div className="flex justify-between text-lg font-semibold">
@@ -384,4 +462,7 @@ export default function CheckoutPage() {
     </main>
   );
 }
+
+
+
 
