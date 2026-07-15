@@ -41,6 +41,7 @@ export default function ProductDetailClient() {
   const [submittingReview, setSubmittingReview] = useState(false);
   const [reviewError, setReviewError] = useState("");
   const [reviewSuccess, setReviewSuccess] = useState("");
+  const [wishlisted, setWishlisted] = useState(false);
 
   useEffect(() => {
     if (id) fetchProduct();
@@ -50,6 +51,12 @@ export default function ProductDetailClient() {
   useEffect(() => {
     setPageUrl(window.location.href);
   }, []);
+
+  useEffect(() => {
+    if (!product) return;
+    const stored = JSON.parse(localStorage.getItem("mitti_wishlist") || "[]");
+    setWishlisted(stored.some((item) => item.productId === product._id));
+  }, [product]);
 
   useEffect(() => {
     if (product?.category) {
@@ -189,6 +196,35 @@ export default function ProductDetailClient() {
       setReviewError("Could not submit your review. Please try again.");
     } finally {
       setSubmittingReview(false);
+    }
+  };
+
+  const handleToggleWishlist = async () => {
+    const stored = JSON.parse(localStorage.getItem("mitti_wishlist") || "[]");
+    const exists = stored.some((item) => item.productId === product._id);
+    let updated;
+    if (exists) {
+      updated = stored.filter((item) => item.productId !== product._id);
+    } else {
+      updated = [
+        ...stored,
+        {
+          productId: product._id,
+          name: product.name,
+          price: product.price,
+          image: images[0] || "",
+        },
+      ];
+    }
+    localStorage.setItem("mitti_wishlist", JSON.stringify(updated));
+    window.dispatchEvent(new Event("wishlistUpdated"));
+    setWishlisted(!exists);
+    try {
+      await api.put(`/api/products/${product._id}/wishlist`, {
+        action: exists ? "remove" : "add",
+      });
+    } catch (err) {
+      console.error("Error updating wishlist count:", err);
     }
   };
 
@@ -396,6 +432,22 @@ export default function ProductDetailClient() {
             >
               View Cart
             </Link>
+            <button
+              type="button"
+              onClick={handleToggleWishlist}
+              aria-label={wishlisted ? "Remove from wishlist" : "Add to wishlist"}
+              className="w-12 h-12 rounded-full border border-[#E5D5C3] flex items-center justify-center hover:bg-white transition flex-shrink-0"
+            >
+              <svg
+                className={`w-5 h-5 ${wishlisted ? "text-[#C1653A]" : "text-[#6B4530]"}`}
+                viewBox="0 0 24 24"
+                fill={wishlisted ? "currentColor" : "none"}
+                stroke="currentColor"
+                strokeWidth="2"
+              >
+                <path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z" />
+              </svg>
+            </button>
           </div>
 
           <div className="flex items-center gap-3">
@@ -704,6 +756,9 @@ export default function ProductDetailClient() {
     </main>
   );
 }
+
+
+
 
 
 

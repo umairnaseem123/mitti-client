@@ -10,6 +10,7 @@ const navItems = [
   { href: "/admin/products", label: "Products" },
   { href: "/admin/orders", label: "Orders" },
   { href: "/admin/coupons", label: "Coupons" },
+    { href: "/admin/wishlist", label: "Wishlist Insights" },
   { href: "/admin/subscribers", label: "Subscribers" },
   { href: "/admin/settings", label: "Settings" },
 ];
@@ -100,4 +101,5 @@ export default function AdminSidebar({ adminName }) {
     </>
   );
 }
+
 

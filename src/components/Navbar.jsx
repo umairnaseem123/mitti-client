@@ -7,6 +7,7 @@ export default function Navbar() {
   const [helpOpen, setHelpOpen] = useState(false);
   const [cartCount, setCartCount] = useState(0);
   const [wishlistCount, setWishlistCount] = useState(0);
+
   const helpRef = useRef(null);
 
   useEffect(() => {
@@ -45,12 +46,9 @@ export default function Navbar() {
       const stored = JSON.parse(localStorage.getItem("mitti_wishlist") || "[]");
       setWishlistCount(stored.length);
     };
-
     updateWishlistCount();
-
     window.addEventListener("wishlistUpdated", updateWishlistCount);
     window.addEventListener("storage", updateWishlistCount);
-
     return () => {
       window.removeEventListener("wishlistUpdated", updateWishlistCount);
       window.removeEventListener("storage", updateWishlistCount);
@@ -165,7 +163,7 @@ export default function Navbar() {
 
       <div className="flex items-center gap-5">
         <Link
-          href="/wish-list"
+          href="/wishlist"
           className="relative flex items-center gap-2 text-[#6B4530] font-medium hover:text-[#8B6F5C] transition"
         >
           <div className="relative">
@@ -264,7 +262,7 @@ export default function Navbar() {
           <Link href="/track-order" onClick={() => setMenuOpen(false)}>
             Track Order
           </Link>
-          <Link href="/wish-list" onClick={() => setMenuOpen(false)}>
+          <Link href="/wishlist" onClick={() => setMenuOpen(false)}>
             Wishlist
           </Link>
 
@@ -292,3 +290,5 @@ export default function Navbar() {
     </nav>
   );
 }
+
+

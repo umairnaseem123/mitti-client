@@ -80,6 +80,7 @@ export default function ProductsListPage() {
                   <th className="px-4 py-3">Category</th>
                   <th className="px-4 py-3">Price</th>
                   <th className="px-4 py-3">Stock</th>
+                  <th className="px-4 py-3">Wishlists</th>
                   <th className="px-4 py-3">Actions</th>
                 </tr>
               </thead>
@@ -103,6 +104,7 @@ export default function ProductsListPage() {
                     <td className="px-4 py-3 text-[#6B4530]">{p.category}</td>
                     <td className="px-4 py-3 text-[#6B4530]">Rs. {p.price}</td>
                     <td className="px-4 py-3 text-[#6B4530]">{p.stock}</td>
+                    <td className="px-4 py-3 text-[#6B4530]">{p.wishlistCount || 0}</td>
                     <td className="px-4 py-3 flex gap-3">
                       <Link
                         href={`/admin/products/edit/${p._id}`}
@@ -127,3 +129,4 @@ export default function ProductsListPage() {
     </div>
   );
 }
+

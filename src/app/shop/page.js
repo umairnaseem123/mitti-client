@@ -1,4 +1,4 @@
-import ShopClient from "./ShopClient";
+﻿import ShopClient from "./ShopClient";
 
 export const metadata = {
   title: "Shop",
@@ -9,3 +9,4 @@ export const metadata = {
 export default function ShopPage() {
   return <ShopClient />;
 }
+

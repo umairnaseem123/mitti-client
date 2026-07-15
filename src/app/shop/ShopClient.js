@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
@@ -71,7 +71,7 @@ function ShopContent() {
     });
   };
 
-  const toggleWishlist = (e, product) => {
+  const toggleWishlist = async (e, product) => {
     e.preventDefault();
     e.stopPropagation();
     const current = getWishlist();
@@ -92,6 +92,13 @@ function ShopContent() {
     }
     localStorage.setItem("mitti_wishlist", JSON.stringify(updated));
     window.dispatchEvent(new Event("wishlistUpdated"));
+    try {
+      await api.put(`/api/products/${product._id}/wishlist`, {
+        action: exists ? "remove" : "add",
+      });
+    } catch (err) {
+      console.error("Error updating wishlist count:", err);
+    }
   };
 
   const isWishlisted = (productId) =>
@@ -300,3 +307,4 @@ export default function ShopClient() {
     </Suspense>
   );
 }
+
