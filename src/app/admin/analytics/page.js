@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
@@ -27,6 +27,14 @@ export default function AdminAnalyticsPage() {
   const [loading, setLoading] = useState(true);
   const [adminName, setAdminName] = useState("");
 
+  // Website traffic (Google Analytics) state
+  const [webData, setWebData] = useState(null);
+  const [topPages, setTopPages] = useState([]);
+  const [webLoading, setWebLoading] = useState(true);
+
+  // Live / realtime visitors state
+  const [liveData, setLiveData] = useState(null);
+
   useEffect(() => {
     const token = localStorage.getItem("mitti_admin_token");
     if (!token) {
@@ -35,6 +43,11 @@ export default function AdminAnalyticsPage() {
     }
     setAdminName(localStorage.getItem("mitti_admin_name") || "Admin");
     fetchAnalytics(token);
+    fetchWebsiteAnalytics();
+    fetchLiveData();
+
+    const interval = setInterval(fetchLiveData, 15000); // refresh every 15s
+    return () => clearInterval(interval);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -51,124 +64,170 @@ export default function AdminAnalyticsPage() {
     }
   };
 
+  const fetchWebsiteAnalytics = async () => {
+    try {
+      const [overviewRes, pagesRes] = await Promise.all([
+        api.get("/api/analytics/overview"),
+        api.get("/api/analytics/top-pages"),
+      ]);
+      setWebData(overviewRes.data);
+      setTopPages(pagesRes.data);
+    } catch (err) {
+      console.error("Error fetching website analytics:", err);
+    } finally {
+      setWebLoading(false);
+    }
+  };
+
+  const fetchLiveData = async () => {
+    try {
+      const res = await api.get("/api/analytics/realtime");
+      setLiveData(res.data);
+    } catch (err) {
+      console.error("Error fetching live data:", err);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-[#FBF3E9] flex">
       <AdminSidebar active="/admin/analytics" adminName={adminName} />
 
       <main className="flex-1 p-6 md:p-8 pt-20 md:pt-8">
-        <h1 className="font-[family-name:var(--font-playfair)] text-3xl text-[#6B4530] mb-8">
-          Sales Analytics
+        <h1 className="font-[family-name:var(--font-playfair)] text-3xl text-[#6B4530] mb-4">
+          Analytics
         </h1>
 
-        {loading ? (
-          <p className="text-[#8B6F5C]">Loading analytics...</p>
-        ) : !data ? (
-          <p className="text-red-600">Could not load analytics.</p>
-        ) : (
-          <>
-            <div className="grid grid-cols-2 gap-4 md:gap-6 mb-8">
-              <div className="bg-white border border-[#E5D5C3] rounded-2xl p-4 md:p-6">
-                <p className="text-[#8B6F5C] text-sm mb-2">Total Orders</p>
-                <p className="text-2xl md:text-3xl font-semibold text-[#6B4530]">
-                  {data.totalOrders}
-                </p>
-              </div>
-              <div className="bg-white border border-[#E5D5C3] rounded-2xl p-4 md:p-6">
-                <p className="text-[#8B6F5C] text-sm mb-2">Total Revenue</p>
-                <p className="text-2xl md:text-3xl font-semibold text-[#6B4530]">
-                  Rs. {data.totalRevenue}
-                </p>
-              </div>
-            </div>
+        {/* ===== Live Now Card ===== */}
+        {liveData && (
+          <div className="flex items-center gap-3 bg-white border border-[#E5D5C3] rounded-2xl px-5 py-4 mb-8 w-fit">
+            <span className="relative flex h-3 w-3">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
+            </span>
+            <p className="text-[#6B4530] font-medium">
+              {liveData.activeUsers}{" "}
+              {liveData.activeUsers === 1 ? "person" : "people"} on site right
+              now
+            </p>
+            {liveData.byPage.length > 0 && (
+              <span className="text-[#8B6F5C] text-sm">
+                (
+                {liveData.byPage
+                  .map((p) => `${p.page}: ${p.users}`)
+                  .join(", ")}
+                )
+              </span>
+            )}
+          </div>
+        )}
 
-            <div className="bg-white border border-[#E5D5C3] rounded-2xl p-6 mb-8">
-              <h2 className="font-medium text-[#6B4530] mb-4">
-                Revenue by Month (Last 6 Months)
-              </h2>
-              {data.revenueByMonth.length === 0 ? (
-                <p className="text-[#8B6F5C] text-sm">No order data yet.</p>
-              ) : (
-                <ResponsiveContainer width="100%" height={280}>
-                  <LineChart data={data.revenueByMonth}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#E5D5C3" />
-                    <XAxis dataKey="month" stroke="#8B6F5C" fontSize={12} />
-                    <YAxis stroke="#8B6F5C" fontSize={12} />
-                    <Tooltip
-                      contentStyle={{
-                        backgroundColor: "white",
-                        border: "1px solid #E5D5C3",
-                        borderRadius: "8px",
-                      }}
-                    />
-                    <Line
-                      type="monotone"
-                      dataKey="revenue"
-                      stroke="#6B4530"
-                      strokeWidth={2}
-                      dot={{ fill: "#C1653A" }}
-                    />
-                  </LineChart>
-                </ResponsiveContainer>
-              )}
-            </div>
+        {/* ===== Website Traffic Section ===== */}
+        <section className="mb-10">
+          <h2 className="font-[family-name:var(--font-playfair)] text-xl text-[#6B4530] mb-4">
+            Website Traffic
+          </h2>
 
-            <div className="grid md:grid-cols-2 gap-6">
+          {webLoading ? (
+            <p className="text-[#8B6F5C]">Loading website traffic...</p>
+          ) : !webData ? (
+            <p className="text-red-600">Could not load website analytics.</p>
+          ) : (
+            <>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 mb-6">
+                <div className="bg-white border border-[#E5D5C3] rounded-2xl p-4 md:p-6">
+                  <p className="text-[#8B6F5C] text-sm mb-2">Active Users</p>
+                  <p className="text-2xl md:text-3xl font-semibold text-[#6B4530]">
+                    {webData.activeUsers}
+                  </p>
+                </div>
+                <div className="bg-white border border-[#E5D5C3] rounded-2xl p-4 md:p-6">
+                  <p className="text-[#8B6F5C] text-sm mb-2">New Users</p>
+                  <p className="text-2xl md:text-3xl font-semibold text-[#6B4530]">
+                    {webData.newUsers}
+                  </p>
+                </div>
+                <div className="bg-white border border-[#E5D5C3] rounded-2xl p-4 md:p-6">
+                  <p className="text-[#8B6F5C] text-sm mb-2">Page Views</p>
+                  <p className="text-2xl md:text-3xl font-semibold text-[#6B4530]">
+                    {webData.pageViews}
+                  </p>
+                </div>
+                <div className="bg-white border border-[#E5D5C3] rounded-2xl p-4 md:p-6">
+                  <p className="text-[#8B6F5C] text-sm mb-2">Avg. Session (s)</p>
+                  <p className="text-2xl md:text-3xl font-semibold text-[#6B4530]">
+                    {Math.round(webData.avgSessionDuration)}
+                  </p>
+                </div>
+              </div>
+
               <div className="bg-white border border-[#E5D5C3] rounded-2xl p-6">
-                <h2 className="font-medium text-[#6B4530] mb-4">
-                  Best-Selling Products
-                </h2>
-                {data.topProducts.length === 0 ? (
-                  <p className="text-[#8B6F5C] text-sm">No sales data yet.</p>
+                <h3 className="font-medium text-[#6B4530] mb-4">
+                  Top Pages (Last 7 Days)
+                </h3>
+                {topPages.length === 0 ? (
+                  <p className="text-[#8B6F5C] text-sm">No page view data yet.</p>
                 ) : (
-                  <ResponsiveContainer width="100%" height={280}>
-                    <BarChart data={data.topProducts} layout="vertical">
-                      <CartesianGrid strokeDasharray="3 3" stroke="#E5D5C3" />
-                      <XAxis type="number" stroke="#8B6F5C" fontSize={12} />
-                      <YAxis
-                        type="category"
-                        dataKey="name"
-                        stroke="#8B6F5C"
-                        fontSize={11}
-                        width={110}
-                      />
-                      <Tooltip
-                        contentStyle={{
-                          backgroundColor: "white",
-                          border: "1px solid #E5D5C3",
-                          borderRadius: "8px",
-                        }}
-                      />
-                      <Bar dataKey="qty" fill="#C1653A" radius={[0, 4, 4, 0]} />
-                    </BarChart>
-                  </ResponsiveContainer>
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="text-left text-[#8B6F5C] border-b border-[#E5D5C3]">
+                        <th className="pb-2 font-medium">Page</th>
+                        <th className="pb-2 font-medium text-right">Views</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {topPages.map((p, i) => (
+                        <tr key={i} className="border-b border-[#F3E9DC] last:border-0">
+                          <td className="py-2 text-[#6B4530]">{p.path}</td>
+                          <td className="py-2 text-right text-[#6B4530]">{p.views}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
                 )}
               </div>
+            </>
+          )}
+        </section>
 
-              <div className="bg-white border border-[#E5D5C3] rounded-2xl p-6">
+        {/* ===== Sales Analytics Section (existing) ===== */}
+        <section>
+          <h2 className="font-[family-name:var(--font-playfair)] text-xl text-[#6B4530] mb-4">
+            Sales Analytics
+          </h2>
+
+          {loading ? (
+            <p className="text-[#8B6F5C]">Loading analytics...</p>
+          ) : !data ? (
+            <p className="text-red-600">Could not load analytics.</p>
+          ) : (
+            <>
+              <div className="grid grid-cols-2 gap-4 md:gap-6 mb-8">
+                <div className="bg-white border border-[#E5D5C3] rounded-2xl p-4 md:p-6">
+                  <p className="text-[#8B6F5C] text-sm mb-2">Total Orders</p>
+                  <p className="text-2xl md:text-3xl font-semibold text-[#6B4530]">
+                    {data.totalOrders}
+                  </p>
+                </div>
+                <div className="bg-white border border-[#E5D5C3] rounded-2xl p-4 md:p-6">
+                  <p className="text-[#8B6F5C] text-sm mb-2">Total Revenue</p>
+                  <p className="text-2xl md:text-3xl font-semibold text-[#6B4530]">
+                    Rs. {data.totalRevenue}
+                  </p>
+                </div>
+              </div>
+
+              <div className="bg-white border border-[#E5D5C3] rounded-2xl p-6 mb-8">
                 <h2 className="font-medium text-[#6B4530] mb-4">
-                  Order Status Breakdown
+                  Revenue by Month (Last 6 Months)
                 </h2>
-                {data.statusBreakdown.every((s) => s.count === 0) ? (
+                {data.revenueByMonth.length === 0 ? (
                   <p className="text-[#8B6F5C] text-sm">No order data yet.</p>
                 ) : (
                   <ResponsiveContainer width="100%" height={280}>
-                    <PieChart>
-                      <Pie
-                        data={data.statusBreakdown}
-                        dataKey="count"
-                        nameKey="status"
-                        cx="50%"
-                        cy="50%"
-                        outerRadius={90}
-                        label
-                      >
-                        {data.statusBreakdown.map((entry, index) => (
-                          <Cell
-                            key={`cell-${index}`}
-                            fill={COLORS[index % COLORS.length]}
-                          />
-                        ))}
-                      </Pie>
+                    <LineChart data={data.revenueByMonth}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#E5D5C3" />
+                      <XAxis dataKey="month" stroke="#8B6F5C" fontSize={12} />
+                      <YAxis stroke="#8B6F5C" fontSize={12} />
                       <Tooltip
                         contentStyle={{
                           backgroundColor: "white",
@@ -176,14 +235,91 @@ export default function AdminAnalyticsPage() {
                           borderRadius: "8px",
                         }}
                       />
-                      <Legend />
-                    </PieChart>
+                      <Line
+                        type="monotone"
+                        dataKey="revenue"
+                        stroke="#6B4530"
+                        strokeWidth={2}
+                        dot={{ fill: "#C1653A" }}
+                      />
+                    </LineChart>
                   </ResponsiveContainer>
                 )}
               </div>
-            </div>
-          </>
-        )}
+
+              <div className="grid md:grid-cols-2 gap-6">
+                <div className="bg-white border border-[#E5D5C3] rounded-2xl p-6">
+                  <h2 className="font-medium text-[#6B4530] mb-4">
+                    Best-Selling Products
+                  </h2>
+                  {data.topProducts.length === 0 ? (
+                    <p className="text-[#8B6F5C] text-sm">No sales data yet.</p>
+                  ) : (
+                    <ResponsiveContainer width="100%" height={280}>
+                      <BarChart data={data.topProducts} layout="vertical">
+                        <CartesianGrid strokeDasharray="3 3" stroke="#E5D5C3" />
+                        <XAxis type="number" stroke="#8B6F5C" fontSize={12} />
+                        <YAxis
+                          type="category"
+                          dataKey="name"
+                          stroke="#8B6F5C"
+                          fontSize={11}
+                          width={110}
+                        />
+                        <Tooltip
+                          contentStyle={{
+                            backgroundColor: "white",
+                            border: "1px solid #E5D5C3",
+                            borderRadius: "8px",
+                          }}
+                        />
+                        <Bar dataKey="qty" fill="#C1653A" radius={[0, 4, 4, 0]} />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  )}
+                </div>
+
+                <div className="bg-white border border-[#E5D5C3] rounded-2xl p-6">
+                  <h2 className="font-medium text-[#6B4530] mb-4">
+                    Order Status Breakdown
+                  </h2>
+                  {data.statusBreakdown.every((s) => s.count === 0) ? (
+                    <p className="text-[#8B6F5C] text-sm">No order data yet.</p>
+                  ) : (
+                    <ResponsiveContainer width="100%" height={280}>
+                      <PieChart>
+                        <Pie
+                          data={data.statusBreakdown}
+                          dataKey="count"
+                          nameKey="status"
+                          cx="50%"
+                          cy="50%"
+                          outerRadius={90}
+                          label
+                        >
+                          {data.statusBreakdown.map((entry, index) => (
+                            <Cell
+                              key={`cell-${index}`}
+                              fill={COLORS[index % COLORS.length]}
+                            />
+                          ))}
+                        </Pie>
+                        <Tooltip
+                          contentStyle={{
+                            backgroundColor: "white",
+                            border: "1px solid #E5D5C3",
+                            borderRadius: "8px",
+                          }}
+                        />
+                        <Legend />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  )}
+                </div>
+              </div>
+            </>
+          )}
+        </section>
       </main>
     </div>
   );
