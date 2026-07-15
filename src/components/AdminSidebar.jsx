@@ -7,6 +7,7 @@ import { Menu, X } from "lucide-react";
 
 const navItems = [
   { href: "/admin/dashboard", label: "Dashboard" },
+    { href: "/admin/analytics", label: "Analytics" },
   { href: "/admin/products", label: "Products" },
   { href: "/admin/orders", label: "Orders" },
   { href: "/admin/coupons", label: "Coupons" },
@@ -101,5 +102,6 @@ export default function AdminSidebar({ adminName }) {
     </>
   );
 }
+
 
 
