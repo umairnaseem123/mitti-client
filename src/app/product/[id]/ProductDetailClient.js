@@ -36,6 +36,7 @@ export default function ProductDetailClient() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [qty, setQty] = useState(1);
+  const [selectedColor, setSelectedColor] = useState(null);
   const [added, setAdded] = useState(false);
   const [activeImage, setActiveImage] = useState(0);
   const [linkCopied, setLinkCopied] = useState(false);
@@ -71,6 +72,9 @@ export default function ProductDetailClient() {
   useEffect(() => {
     if (!product) return;
     setWishlisted(checkIsWishlisted(product._id));
+    if (product.colors?.length) {
+      setSelectedColor(product.colors[0]);
+    }
   }, [product]);
 
   useEffect(() => {
@@ -160,7 +164,8 @@ export default function ProductDetailClient() {
     const stored = JSON.parse(localStorage.getItem("mitti_cart") || "[]");
 
     const existingIndex = stored.findIndex(
-      (item) => item.productId === product._id,
+      (item) =>
+        item.productId === product._id && item.color === selectedColor,
     );
 
     if (existingIndex > -1) {
@@ -172,6 +177,7 @@ export default function ProductDetailClient() {
         price: product.price,
         image: images[0] || "",
         qty: qty,
+        color: selectedColor || undefined,
       });
     }
 
@@ -434,6 +440,28 @@ export default function ProductDetailClient() {
               </>
             )}
           </div>
+
+          {product.colors?.length > 0 && (
+            <div className="mb-6">
+              <span className="text-[#6B4530] block mb-2">Color Family</span>
+              <div className="flex flex-wrap gap-2">
+                {product.colors.map((color) => (
+                  <button
+                    key={color}
+                    type="button"
+                    onClick={() => setSelectedColor(color)}
+                    className={`px-4 py-2 rounded-lg text-sm border transition ${
+                      selectedColor === color
+                        ? "border-[#C1653A] text-[#C1653A] bg-[#FBF3E9]"
+                        : "border-[#E5D5C3] text-[#6B4530] bg-white hover:border-[#C1653A]"
+                    }`}
+                  >
+                    {color}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
 
           <div className="flex items-center gap-3 mb-6">
             <span className="text-[#6B4530]">Quantity:</span>
