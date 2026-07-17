@@ -83,7 +83,7 @@ export default async function Home() {
             className="group relative h-96 rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-shadow"
           >
             <img
-              src="/hero.jpg"
+              src="/concrete.png"
               alt="Concrete Decor"
               className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
             />
@@ -106,7 +106,7 @@ export default async function Home() {
             className="group relative h-96 rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-shadow"
           >
             <img
-              src="/hero.jpg"
+              src="/candles.png"
               alt="Candles"
               className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
             />
@@ -199,8 +199,7 @@ export default async function Home() {
           </h2>
           <p className="text-[#6B4530]/80 text-lg leading-relaxed mb-8">
             Mitti was founded by two teenage creators, Aliza and Muniba, who
-            turned their love for handmade decor into a growing small
-            business.
+            turned their love for handmade decor into a growing small business.
           </p>
           <Link
             href="/about"
@@ -219,8 +218,8 @@ export default async function Home() {
           Let Us Send You Our Offers
         </h2>
         <p className="text-[#E5D5C3]/90 max-w-md mx-auto mb-9">
-          Be the first to know about new collections, discounts, and
-          restocks &mdash; straight to your inbox.
+          Be the first to know about new collections, discounts, and restocks
+          &mdash; straight to your inbox.
         </p>
         <NewsletterForm />
       </section>
