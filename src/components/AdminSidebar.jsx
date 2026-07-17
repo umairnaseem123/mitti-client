@@ -12,6 +12,7 @@ const navItems = [
   { href: "/admin/orders", label: "Orders" },
   { href: "/admin/coupons", label: "Coupons" },
     { href: "/admin/wishlist", label: "Wishlist Insights" },
+  { href: "/admin/stock-notifications", label: "Restock Requests" },
   { href: "/admin/subscribers", label: "Subscribers" },
   { href: "/admin/settings", label: "Settings" },
 ];

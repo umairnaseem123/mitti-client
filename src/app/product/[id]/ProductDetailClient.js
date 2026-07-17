@@ -1,10 +1,22 @@
-﻿"use client";
+"use client";
 
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import api from "@/lib/api";
+import {
+  isWishlisted as checkIsWishlisted,
+  getWishlistContact,
+  saveWishlistContact,
+  addToWishlist,
+  removeFromWishlist,
+} from "@/lib/wishlist";
 import WishlistContactModal from "@/components/WishlistContactModal";
+import {
+  getSavedContact,
+  saveContact,
+  requestStockNotification,
+} from "@/lib/stockNotifications";
 
 function Stars({ rating, size = "text-base" }) {
   return (
@@ -43,7 +55,9 @@ export default function ProductDetailClient() {
   const [reviewError, setReviewError] = useState("");
   const [reviewSuccess, setReviewSuccess] = useState("");
   const [wishlisted, setWishlisted] = useState(false);
-  const [showWishlistModal, setShowWishlistModal] = useState(false);
+  const [wishlistModalOpen, setWishlistModalOpen] = useState(false);
+  const [notifyModalOpen, setNotifyModalOpen] = useState(false);
+  const [notifyRequested, setNotifyRequested] = useState(false);
 
   useEffect(() => {
     if (id) fetchProduct();
@@ -56,8 +70,7 @@ export default function ProductDetailClient() {
 
   useEffect(() => {
     if (!product) return;
-    const stored = JSON.parse(localStorage.getItem("mitti_wishlist") || "[]");
-    setWishlisted(stored.some((item) => item.productId === product._id));
+    setWishlisted(checkIsWishlisted(product._id));
   }, [product]);
 
   useEffect(() => {
@@ -201,66 +214,53 @@ export default function ProductDetailClient() {
     }
   };
 
-  const performWishlistToggle = async (action, name, phone) => {
-    const stored = JSON.parse(localStorage.getItem("mitti_wishlist") || "[]");
-    let updated;
-    if (action === "remove") {
-      updated = stored.filter((item) => item.productId !== product._id);
+  // Wishlist toggle: removing never needs contact details. Adding needs a
+  // name+phone on file - if we already have one saved on this device we use
+  // it silently, otherwise we show a quick popup to collect it once.
+  const handleToggleWishlist = async () => {
+    if (!product) return;
+
+    if (wishlisted) {
+      setWishlisted(false);
+      await removeFromWishlist(product._id);
+      return;
+    }
+
+    const savedContact = getWishlistContact();
+    if (savedContact) {
+      setWishlisted(true);
+      await addToWishlist(product, images, savedContact);
     } else {
-      updated = [
-        ...stored,
-        {
-          productId: product._id,
-          name: product.name,
-          price: product.price,
-          image: images[0] || "",
-          phone: phone || "",
-        },
-      ];
+      setWishlistModalOpen(true);
     }
-    localStorage.setItem("mitti_wishlist", JSON.stringify(updated));
-    window.dispatchEvent(new Event("wishlistUpdated"));
-    setWishlisted(action === "add");
-
-    // The backend saves the WishlistEntry (name/phone) as part of this
-    // same call — there's no separate contact-capture endpoint.
-    await api.put(`/api/products/${product._id}/wishlist`, {
-      action,
-      name,
-      phone,
-    });
   };
 
-  const handleToggleWishlist = () => {
-    const stored = JSON.parse(localStorage.getItem("mitti_wishlist") || "[]");
-    const exists = stored.some((item) => item.productId === product._id);
+  const handleWishlistContactSubmit = async (name, phone) => {
+    saveWishlistContact(name, phone);
+    setWishlisted(true);
+    await addToWishlist(product, images, { name, phone });
+    setWishlistModalOpen(false);
+  };
 
-    if (exists) {
-      // Removing — no popup needed. Pass along the phone we stored
-      // when adding, so the backend can find and delete the matching entry.
-      const entry = stored.find((item) => item.productId === product._id);
-      performWishlistToggle("remove", undefined, entry?.phone).catch((err) => {
-        console.error("Error updating wishlist count:", err);
-      });
+  // Notify Me (out of stock): reuse the same saved contact as wishlist if
+  // we already have it on this device, otherwise show the popup once.
+  const handleNotifyMe = async () => {
+    if (!product) return;
+
+    const savedContact = getSavedContact();
+    if (savedContact) {
+      await requestStockNotification(product._id, savedContact);
+      setNotifyRequested(true);
     } else {
-      // Adding — collect name/phone first, then make the single PUT call.
-      setShowWishlistModal(true);
+      setNotifyModalOpen(true);
     }
   };
 
-  const handleWishlistSubmit = async (name, phone) => {
-    await performWishlistToggle("add", name, phone);
-    setShowWishlistModal(false);
-  };
-
-  const handleWishlistSkip = async () => {
-    try {
-      await performWishlistToggle("add", undefined, undefined);
-    } catch (err) {
-      console.error("Error updating wishlist count:", err);
-    } finally {
-      setShowWishlistModal(false);
-    }
+  const handleNotifyContactSubmit = async (name, phone) => {
+    saveContact(name, phone);
+    await requestStockNotification(product._id, { name, phone });
+    setNotifyRequested(true);
+    setNotifyModalOpen(false);
   };
 
   const handleCopyLink = async () => {
@@ -452,7 +452,7 @@ export default function ProductDetailClient() {
             </button>
           </div>
 
-          <div className="flex gap-4 mb-6">
+          <div className="flex gap-4 mb-6 flex-wrap">
             <button
               onClick={handleAddToCart}
               disabled={isOutOfStock}
@@ -461,6 +461,22 @@ export default function ProductDetailClient() {
             >
               {isOutOfStock ? "Out of Stock" : added ? `Added ${"\u2713"}` : "Add to Cart"}
             </button>
+
+            {isOutOfStock && (
+              <button
+                type="button"
+                onClick={handleNotifyMe}
+                disabled={notifyRequested}
+                className={`px-8 py-3 rounded-full font-medium border transition ${
+                  notifyRequested
+                    ? "border-green-300 text-green-700 bg-green-50 cursor-default"
+                    : "border-[#6B4530] text-[#6B4530] hover:bg-[#6B4530] hover:text-white"
+                }`}
+              >
+                {notifyRequested ? `We'll notify you ${"\u2713"}` : "Notify Me When Available"}
+              </button>
+            )}
+
             <Link
               href="/cart"
               className="px-8 py-3 rounded-full font-medium border border-[#E5D5C3] text-[#6B4530] hover:bg-white transition"
@@ -789,19 +805,20 @@ export default function ProductDetailClient() {
         </div>
       )}
 
-      {showWishlistModal && (
-        <WishlistContactModal
-          product={product}
-          onSubmit={handleWishlistSubmit}
-          onSkip={handleWishlistSkip}
-        />
-      )}
+      <WishlistContactModal
+        open={wishlistModalOpen}
+        onClose={() => setWishlistModalOpen(false)}
+        onSubmit={handleWishlistContactSubmit}
+      />
+
+      <WishlistContactModal
+        open={notifyModalOpen}
+        onClose={() => setNotifyModalOpen(false)}
+        onSubmit={handleNotifyContactSubmit}
+        title="Notify me when available"
+        description="Share your name and number and we'll reach out on WhatsApp as soon as this is back in stock."
+        submitLabel="Notify Me"
+      />
     </main>
   );
 }
-
-
-
-
-
-
