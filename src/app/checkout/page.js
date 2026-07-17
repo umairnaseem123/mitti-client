@@ -1,9 +1,17 @@
-﻿"use client";
+"use client";
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Truck } from "lucide-react";
 import api from "@/lib/api";
+
+// Manual send-money details for customers who are already on their phone
+// and can't scan a QR code shown on the same screen. Both currently route
+// to the same mobile account; update independently here if that changes.
+const PAYMENT_ACCOUNTS = {
+  easypaisa: { title: "ALEEZA", phone: "0329-0175894" },
+  jazzcash: { title: "Aliza", phone: "0329-0175894" },
+};
 
 export default function CheckoutPage() {
   const router = useRouter();
@@ -17,6 +25,7 @@ export default function CheckoutPage() {
   const [appliedCoupon, setAppliedCoupon] = useState(null);
   const [couponError, setCouponError] = useState("");
   const [applyingCoupon, setApplyingCoupon] = useState(false);
+  const [numberCopied, setNumberCopied] = useState(false);
 
   const [form, setForm] = useState({
     name: "",
@@ -85,6 +94,17 @@ export default function CheckoutPage() {
   const handlePaymentMethodChange = (method) => {
     setPaymentMethod(method);
     setTransactionId(""); // reset transaction ID whenever method changes
+    setNumberCopied(false);
+  };
+
+  const handleCopyAccountNumber = async (phone) => {
+    try {
+      await navigator.clipboard.writeText(phone);
+      setNumberCopied(true);
+      setTimeout(() => setNumberCopied(false), 2000);
+    } catch (err) {
+      console.error("Could not copy account number:", err);
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -146,6 +166,8 @@ export default function CheckoutPage() {
       setSubmitting(false);
     }
   };
+
+  const activeAccount = PAYMENT_ACCOUNTS[paymentMethod];
 
   return (
     <main className="bg-[#FBF3E9] min-h-screen">
@@ -283,14 +305,14 @@ export default function CheckoutPage() {
                 </div>
               </label>
 
-              {/* QR Code Display + Transaction ID */}
+              {/* QR Code + Account Number + Transaction ID */}
               {isOnlinePayment && (
-                <div className="bg-white border border-[#E5D5C3] rounded-lg p-6 text-center">
-                  <p className="text-[#6B4530] font-medium mb-4">
-                    Scan the QR code below to pay via{" "}
-                    {paymentMethod === "easypaisa" ? "Easypaisa" : "JazzCash"}
+                <div className="bg-white border border-[#E5D5C3] rounded-lg p-6">
+                  <p className="text-[#6B4530] font-medium mb-4 text-center">
+                    Pay via {paymentMethod === "easypaisa" ? "Easypaisa" : "JazzCash"}
                   </p>
-                  <div className="flex justify-center mb-4">
+
+                  <div className="flex justify-center mb-5">
                     <img
                       src={
                         paymentMethod === "easypaisa"
@@ -303,13 +325,48 @@ export default function CheckoutPage() {
                       className="rounded-lg border border-[#E5D5C3]"
                     />
                   </div>
-                  <p className="text-[#8B6F5C] text-sm mb-5">
-                    Scan this QR code using{" "}
+
+                  <p className="text-[#8B6F5C] text-sm text-center mb-5">
+                    Scan the QR code with the{" "}
                     {paymentMethod === "easypaisa" ? "Easypaisa" : "JazzCash"}{" "}
-                    app and complete the payment. After paying, enter the
-                    Transaction ID / Reference Number from your payment
-                    receipt below to place your order.
+                    app on another device, or send the amount directly to
+                    the account below if you&apos;re paying from this phone.
                   </p>
+
+                  <div className="bg-[#FBF3E9] border border-[#E5D5C3] rounded-lg p-4 mb-5">
+                    <p className="text-xs text-[#8B6F5C] mb-1">
+                      Send to {activeAccount.title}&apos;s{" "}
+                      {paymentMethod === "easypaisa" ? "Easypaisa" : "JazzCash"}{" "}
+                      account
+                    </p>
+                    <div className="flex items-center justify-between gap-3">
+                      <p className="text-[#6B4530] font-semibold text-lg tracking-wide">
+                        {activeAccount.phone}
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => handleCopyAccountNumber(activeAccount.phone)}
+                        className="flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-[#E5D5C3] text-[#6B4530] text-xs font-medium hover:bg-white transition"
+                      >
+                        {numberCopied ? (
+                          <>
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                              <path d="M20 6L9 17l-5-5" strokeLinecap="round" strokeLinejoin="round" />
+                            </svg>
+                            Copied
+                          </>
+                        ) : (
+                          <>
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+                              <path d="M10 13a5 5 0 007.07 0l2.83-2.83a5 5 0 00-7.07-7.07l-1.5 1.5" strokeLinecap="round" strokeLinejoin="round" />
+                              <path d="M14 11a5 5 0 00-7.07 0L4.1 13.83a5 5 0 007.07 7.07l1.5-1.5" strokeLinecap="round" strokeLinejoin="round" />
+                            </svg>
+                            Copy
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  </div>
 
                   <div className="text-left">
                     <label className="block text-[#6B4530] font-medium mb-2 text-sm">
@@ -462,7 +519,3 @@ export default function CheckoutPage() {
     </main>
   );
 }
-
-
-
-

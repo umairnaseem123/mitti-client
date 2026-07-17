@@ -1,4 +1,4 @@
-﻿export default function TermsPage() {
+export default function TermsPage() {
   return (
     <main className="bg-[#FBF3E9]">
       <section className="bg-[#F0CBA3] py-16 px-6 text-center">
@@ -52,9 +52,11 @@
             Orders &amp; Payment
           </h2>
           <p className="text-[#6B4530]/80 leading-relaxed">
-            We currently accept Cash on Delivery only. Payment is collected
-            at the time of delivery. Orders are confirmed once placed
-            through our website.
+            We accept Cash on Delivery, as well as online payments via
+            EasyPaisa and JazzCash. For online payments, orders are
+            confirmed once the transaction details are submitted through
+            our website; for Cash on Delivery, payment is collected at the
+            time of delivery.
           </p>
         </div>
 

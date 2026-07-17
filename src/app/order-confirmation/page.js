@@ -1,5 +1,5 @@
 ﻿"use client";
-import { Suspense, useEffect, useState } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 
@@ -18,6 +18,7 @@ function ConfirmationContent() {
   const method = searchParams.get("method");
   const [order, setOrder] = useState(null);
   const [copied, setCopied] = useState(false);
+  const hasAutoOpened = useRef(false);
 
   useEffect(() => {
     const stored = localStorage.getItem("mitti_last_order");
@@ -69,6 +70,24 @@ function ConfirmationContent() {
     ? `https://wa.me/${OWNER_WHATSAPP_NUMBER}?text=${buildWhatsAppMessage()}`
     : "#";
 
+  // Automatically try to open the WhatsApp link once the order is ready.
+  // Browsers may block this if it's not tied closely enough to a user
+  // gesture (e.g. Chrome/Safari popup blockers) - the visible button below
+  // is always kept as a guaranteed fallback.
+  useEffect(() => {
+    if (order && success === "true" && !hasAutoOpened.current) {
+      hasAutoOpened.current = true;
+      const win = window.open(whatsappLink, "_blank");
+      // If the popup was blocked, win will be null or undefined
+      if (!win) {
+        console.warn(
+          "WhatsApp auto-open was blocked by the browser. Customer will need to tap the button.",
+        );
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [order, success]);
+
   return (
     <main className="bg-[#FBF3E9] min-h-screen flex items-center justify-center px-6 py-16">
       <div className="max-w-lg w-full text-center bg-white border border-[#E5D5C3] rounded-2xl p-12">
@@ -85,15 +104,17 @@ function ConfirmationContent() {
               {method === "cod"
                 ? "Your order will be delivered soon. Payment is due on arrival."
                 : isOnlinePayment
-                ? "Please send your payment screenshot on WhatsApp so we can confirm your order."
-                : "Your payment was successful and your order is being processed."}
+                  ? "Please send your payment screenshot on WhatsApp so we can confirm your order."
+                  : "Your payment was successful and your order is being processed."}
             </p>
 
             {order && order._id && (
               <div className="bg-[#FBF3E9] border border-[#E5D5C3] rounded-xl px-4 py-3 mb-6">
                 <p className="text-xs text-[#8B6F5C] mb-1">Your Order ID</p>
                 <div className="flex items-center justify-center gap-2">
-                  <p className="text-[#6B4530] font-mono text-sm break-all">{order._id}</p>
+                  <p className="text-[#6B4530] font-mono text-sm break-all">
+                    {order._id}
+                  </p>
                   <button
                     type="button"
                     onClick={handleCopyOrderId}
@@ -101,18 +122,36 @@ function ConfirmationContent() {
                     className="text-[#6B4530] hover:text-[#8B6F5C] transition flex-shrink-0"
                   >
                     {copied ? (
-                      <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <path d="M20 6L9 17l-5-5" strokeLinecap="round" strokeLinejoin="round" />
+                      <svg
+                        className="w-4 h-4"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                      >
+                        <path
+                          d="M20 6L9 17l-5-5"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
                       </svg>
                     ) : (
-                      <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+                      <svg
+                        className="w-4 h-4"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="1.8"
+                      >
                         <rect x="9" y="9" width="13" height="13" rx="2" />
                         <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1" />
                       </svg>
                     )}
                   </button>
                 </div>
-                <p className="text-xs text-[#8B6F5C] mt-1">Save this to track your order later.</p>
+                <p className="text-xs text-[#8B6F5C] mt-1">
+                  Save this to track your order later.
+                </p>
               </div>
             )}
 
@@ -139,13 +178,14 @@ function ConfirmationContent() {
 
             {isOnlinePayment && (
               <p className="text-xs text-[#C1653A] mb-2 font-medium">
-                Important: Please attach your payment screenshot in the WhatsApp chat before sending.
+                Important: Please attach your payment screenshot in the WhatsApp
+                chat before sending.
               </p>
             )}
 
             <p className="text-xs text-[#8B6F5C] mb-6">
-              Tap the button above and hit send {"\u2014"} it helps us process your order
-              faster.
+              We&apos;ve opened WhatsApp for you {"\u2014"} just hit send. If it
+              didn&apos;t open, tap the button above.
             </p>
           </>
         ) : (
@@ -176,7 +216,3 @@ export default function OrderConfirmationPage() {
     </Suspense>
   );
 }
-
-
-
-

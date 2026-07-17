@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import api from "@/lib/api";
+import WishlistContactModal from "@/components/WishlistContactModal";
 
 function Stars({ rating, size = "text-base" }) {
   return (
@@ -42,6 +43,7 @@ export default function ProductDetailClient() {
   const [reviewError, setReviewError] = useState("");
   const [reviewSuccess, setReviewSuccess] = useState("");
   const [wishlisted, setWishlisted] = useState(false);
+  const [showWishlistModal, setShowWishlistModal] = useState(false);
 
   useEffect(() => {
     if (id) fetchProduct();
@@ -199,11 +201,10 @@ export default function ProductDetailClient() {
     }
   };
 
-  const handleToggleWishlist = async () => {
+  const performWishlistToggle = async (action, name, phone) => {
     const stored = JSON.parse(localStorage.getItem("mitti_wishlist") || "[]");
-    const exists = stored.some((item) => item.productId === product._id);
     let updated;
-    if (exists) {
+    if (action === "remove") {
       updated = stored.filter((item) => item.productId !== product._id);
     } else {
       updated = [
@@ -213,18 +214,52 @@ export default function ProductDetailClient() {
           name: product.name,
           price: product.price,
           image: images[0] || "",
+          phone: phone || "",
         },
       ];
     }
     localStorage.setItem("mitti_wishlist", JSON.stringify(updated));
     window.dispatchEvent(new Event("wishlistUpdated"));
-    setWishlisted(!exists);
-    try {
-      await api.put(`/api/products/${product._id}/wishlist`, {
-        action: exists ? "remove" : "add",
+    setWishlisted(action === "add");
+
+    // The backend saves the WishlistEntry (name/phone) as part of this
+    // same call — there's no separate contact-capture endpoint.
+    await api.put(`/api/products/${product._id}/wishlist`, {
+      action,
+      name,
+      phone,
+    });
+  };
+
+  const handleToggleWishlist = () => {
+    const stored = JSON.parse(localStorage.getItem("mitti_wishlist") || "[]");
+    const exists = stored.some((item) => item.productId === product._id);
+
+    if (exists) {
+      // Removing — no popup needed. Pass along the phone we stored
+      // when adding, so the backend can find and delete the matching entry.
+      const entry = stored.find((item) => item.productId === product._id);
+      performWishlistToggle("remove", undefined, entry?.phone).catch((err) => {
+        console.error("Error updating wishlist count:", err);
       });
+    } else {
+      // Adding — collect name/phone first, then make the single PUT call.
+      setShowWishlistModal(true);
+    }
+  };
+
+  const handleWishlistSubmit = async (name, phone) => {
+    await performWishlistToggle("add", name, phone);
+    setShowWishlistModal(false);
+  };
+
+  const handleWishlistSkip = async () => {
+    try {
+      await performWishlistToggle("add", undefined, undefined);
     } catch (err) {
       console.error("Error updating wishlist count:", err);
+    } finally {
+      setShowWishlistModal(false);
     }
   };
 
@@ -752,6 +787,14 @@ export default function ProductDetailClient() {
             />
           </div>
         </div>
+      )}
+
+      {showWishlistModal && (
+        <WishlistContactModal
+          product={product}
+          onSubmit={handleWishlistSubmit}
+          onSkip={handleWishlistSkip}
+        />
       )}
     </main>
   );

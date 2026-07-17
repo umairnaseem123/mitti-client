@@ -1,4 +1,4 @@
-﻿import Link from "next/link";
+import Link from "next/link";
 import api from "@/lib/api";
 import NewsletterForm from "@/components/NewsletterForm";
 
@@ -42,9 +42,8 @@ export default async function Home() {
             Welcome to Mitti&apos;s World
           </h1>
           <p className="text-white/90 text-lg md:text-xl mb-9 max-w-lg leading-relaxed">
-            Handcrafted concrete art and scented candles &mdash; 
-            each piece
-            shaped by earth, touched by artistry, and made with soul.
+            Born from mitti, made with soul: handcrafted concrete art and
+            scented candles for every space.
           </p>
           <Link
             href="/shop"

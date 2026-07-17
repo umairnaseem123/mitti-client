@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useState } from "react";
 import api from "@/lib/api";
@@ -10,6 +10,22 @@ const statusLabels = {
   shipped: "Shipped",
   delivered: "Delivered",
 };
+
+// Confirmed official deep-link formats for each courier.
+// Courier name is normalized (lowercased) so this works regardless of
+// how the value is cased/stored in Order.js (e.g. "TCS", "tcs", "Tcs").
+function getTrackingUrl(courier, trackingNumber) {
+  if (!courier || !trackingNumber) return null;
+  const normalized = courier.trim().toLowerCase();
+
+  if (normalized === "tcs") {
+    return `https://www.tcsexpress.com/track/${trackingNumber}`;
+  }
+  if (normalized === "leopards") {
+    return `https://leopardsfulfillment.leopardscourier.com/Track/Index?Cn=${trackingNumber}`;
+  }
+  return null;
+}
 
 export default function TrackOrderPage() {
   const [orderId, setOrderId] = useState("");
@@ -46,6 +62,10 @@ export default function TrackOrderPage() {
   const currentStepIndex = order
     ? statusSteps.indexOf(order.orderStatus)
     : -1;
+
+  const trackingUrl = order
+    ? getTrackingUrl(order.courier, order.trackingNumber)
+    : null;
 
   return (
     <main className="bg-[#FBF3E9] min-h-screen">
@@ -165,6 +185,19 @@ export default function TrackOrderPage() {
                 );
               })}
             </div>
+
+            {/* Courier tracking button — only shows once admin has saved
+                both a courier and a tracking number for this order */}
+            {trackingUrl && (
+              <a
+                href={trackingUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="block w-full text-center bg-[#F0CBA3] text-[#6B4530] py-3 rounded-full font-medium hover:bg-[#e6b988] transition mb-6"
+              >
+                Track Package with {order.courier} &rarr;
+              </a>
+            )}
 
             {/* Items */}
             <div className="border-t border-[#E5D5C3] pt-4 space-y-3">
