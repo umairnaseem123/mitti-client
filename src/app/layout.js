@@ -54,7 +54,18 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
-      <body className={`${playfair.variable} ${inter.variable} bg-[#FBF3E9]`}>
+      {/* suppressHydrationWarning here only: browser extensions like
+          Grammarly inject attributes (data-gr-ext-installed, etc.) into
+          <body> before React hydrates, which was triggering Next.js's
+          full-screen dev error overlay on every page load and silently
+          blocking clicks underneath it (that's why the wishlist heart
+          button appeared to do nothing on /shop). This tells React to
+          ignore attribute mismatches on this one element without
+          disabling hydration warnings anywhere else in the app. */}
+      <body
+        suppressHydrationWarning
+        className={`${playfair.variable} ${inter.variable} bg-[#FBF3E9]`}
+      >
         <Script
           src="https://www.googletagmanager.com/gtag/js?id=G-N00D0R0S75"
           strategy="afterInteractive"

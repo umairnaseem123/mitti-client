@@ -114,3 +114,4 @@ export default function WishlistContactModal({ product, onSubmit, onSkip }) {
     </div>
   );
 }
+

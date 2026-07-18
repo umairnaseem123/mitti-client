@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useEffect, useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
@@ -103,12 +103,15 @@ function ShopContent() {
   };
 
   const toggleWishlist = (e, product) => {
+    console.log("HEART CLICKED", product.name);
     e.preventDefault();
     e.stopPropagation();
     const current = getWishlist();
     const exists = current.some((item) => item.productId === product._id);
+    console.log("Already wishlisted?", exists);
 
     if (exists) {
+      console.log("Removing...");
       // Removing — no popup needed. Pass along the phone we stored
       // when adding, so the backend can find and delete the matching entry.
       const entry = current.find((item) => item.productId === product._id);
@@ -118,6 +121,7 @@ function ShopContent() {
         },
       );
     } else {
+      console.log("Setting wishlistModalProduct to:", product);
       // Adding — collect name/phone first, then make the single PUT call.
       setWishlistModalProduct(product);
     }
@@ -140,6 +144,8 @@ function ShopContent() {
 
   const isWishlisted = (productId) =>
     wishlist.some((item) => item.productId === productId);
+
+  console.log("RENDER — wishlistModalProduct is:", wishlistModalProduct);
 
   return (
     <main className="bg-[#FBF3E9] min-h-screen">
@@ -352,4 +358,3 @@ export default function ShopClient() {
     </Suspense>
   );
 }
-

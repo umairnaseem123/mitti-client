@@ -164,8 +164,7 @@ export default function ProductDetailClient() {
     const stored = JSON.parse(localStorage.getItem("mitti_cart") || "[]");
 
     const existingIndex = stored.findIndex(
-      (item) =>
-        item.productId === product._id && item.color === selectedColor,
+      (item) => item.productId === product._id && item.color === selectedColor,
     );
 
     if (existingIndex > -1) {
@@ -248,6 +247,14 @@ export default function ProductDetailClient() {
     setWishlistModalOpen(false);
   };
 
+  // Called when the user skips leaving contact details in the wishlist
+  // popup - the wishlist add still needs to happen, just without a name/phone.
+  const handleWishlistContactSkip = async () => {
+    setWishlisted(true);
+    await addToWishlist(product, images, {});
+    setWishlistModalOpen(false);
+  };
+
   // Notify Me (out of stock): reuse the same saved contact as wishlist if
   // we already have it on this device, otherwise show the popup once.
   const handleNotifyMe = async () => {
@@ -266,6 +273,10 @@ export default function ProductDetailClient() {
     saveContact(name, phone);
     await requestStockNotification(product._id, { name, phone });
     setNotifyRequested(true);
+    setNotifyModalOpen(false);
+  };
+
+  const handleNotifyContactSkip = () => {
     setNotifyModalOpen(false);
   };
 
@@ -300,9 +311,12 @@ export default function ProductDetailClient() {
   const averageRating = reviews.length
     ? reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length
     : 0;
-  const hasDiscount = product.originalPrice && product.originalPrice > product.price;
+  const hasDiscount =
+    product.originalPrice && product.originalPrice > product.price;
   const discountPercent = hasDiscount
-    ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)
+    ? Math.round(
+        ((product.originalPrice - product.price) / product.originalPrice) * 100,
+      )
     : 0;
   const isOutOfStock = !product.stock || product.stock <= 0;
 
@@ -345,9 +359,20 @@ export default function ProductDetailClient() {
                 aria-label="Zoom in on photo"
                 className="absolute bottom-3 left-3 w-9 h-9 rounded-full bg-white/85 hover:bg-white text-[#6B4530] flex items-center justify-center shadow-md transition z-10"
               >
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                >
                   <circle cx="11" cy="11" r="7" />
-                  <path d="M21 21l-4.3-4.3M11 8v6M8 11h6" strokeLinecap="round" strokeLinejoin="round" />
+                  <path
+                    d="M21 21l-4.3-4.3M11 8v6M8 11h6"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
                 </svg>
               </button>
             )}
@@ -359,8 +384,19 @@ export default function ProductDetailClient() {
                   aria-label="Previous design"
                   className="absolute left-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/85 hover:bg-white text-[#6B4530] flex items-center justify-center shadow-md transition"
                 >
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M15 18l-6-6 6-6" strokeLinecap="round" strokeLinejoin="round" />
+                  <svg
+                    width="20"
+                    height="20"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                  >
+                    <path
+                      d="M15 18l-6-6 6-6"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
                   </svg>
                 </button>
                 <button
@@ -368,8 +404,19 @@ export default function ProductDetailClient() {
                   aria-label="Next design"
                   className="absolute right-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/85 hover:bg-white text-[#6B4530] flex items-center justify-center shadow-md transition"
                 >
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M9 18l6-6-6-6" strokeLinecap="round" strokeLinejoin="round" />
+                  <svg
+                    width="20"
+                    height="20"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                  >
+                    <path
+                      d="M9 18l6-6-6-6"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
                   </svg>
                 </button>
 
@@ -485,9 +532,12 @@ export default function ProductDetailClient() {
               onClick={handleAddToCart}
               disabled={isOutOfStock}
               className={`bg-[#6B4530] text-white px-8 py-3 rounded-full font-medium transition ${isOutOfStock ? "opacity-50 cursor-not-allowed" : "hover:bg-[#8B6F5C]"}`}
-            
             >
-              {isOutOfStock ? "Out of Stock" : added ? `Added ${"\u2713"}` : "Add to Cart"}
+              {isOutOfStock
+                ? "Out of Stock"
+                : added
+                  ? `Added ${"\u2713"}`
+                  : "Add to Cart"}
             </button>
 
             {isOutOfStock && (
@@ -501,7 +551,9 @@ export default function ProductDetailClient() {
                     : "border-[#6B4530] text-[#6B4530] hover:bg-[#6B4530] hover:text-white"
                 }`}
               >
-                {notifyRequested ? `We'll notify you ${"\u2713"}` : "Notify Me When Available"}
+                {notifyRequested
+                  ? `We'll notify you ${"\u2713"}`
+                  : "Notify Me When Available"}
               </button>
             )}
 
@@ -514,7 +566,9 @@ export default function ProductDetailClient() {
             <button
               type="button"
               onClick={handleToggleWishlist}
-              aria-label={wishlisted ? "Remove from wishlist" : "Add to wishlist"}
+              aria-label={
+                wishlisted ? "Remove from wishlist" : "Add to wishlist"
+              }
               className="w-12 h-12 rounded-full border border-[#E5D5C3] flex items-center justify-center hover:bg-white transition flex-shrink-0"
             >
               <svg
@@ -564,13 +618,37 @@ export default function ProductDetailClient() {
               className="w-9 h-9 rounded-full bg-white border border-[#E5D5C3] flex items-center justify-center text-[#6B4530] hover:bg-[#6B4530] hover:border-[#6B4530] hover:text-white transition"
             >
               {linkCopied ? (
-                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M20 6L9 17l-5-5" strokeLinecap="round" strokeLinejoin="round" />
+                <svg
+                  className="w-4 h-4"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                >
+                  <path
+                    d="M20 6L9 17l-5-5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
                 </svg>
               ) : (
-                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-                  <path d="M10 13a5 5 0 007.07 0l2.83-2.83a5 5 0 00-7.07-7.07l-1.5 1.5" strokeLinecap="round" strokeLinejoin="round" />
-                  <path d="M14 11a5 5 0 00-7.07 0L4.1 13.83a5 5 0 007.07 7.07l1.5-1.5" strokeLinecap="round" strokeLinejoin="round" />
+                <svg
+                  className="w-4 h-4"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.8"
+                >
+                  <path
+                    d="M10 13a5 5 0 007.07 0l2.83-2.83a5 5 0 00-7.07-7.07l-1.5 1.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                  <path
+                    d="M14 11a5 5 0 00-7.07 0L4.1 13.83a5 5 0 007.07 7.07l1.5-1.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
                 </svg>
               )}
             </button>
@@ -640,9 +718,7 @@ export default function ProductDetailClient() {
           )}
 
           <div className="bg-white border border-[#E5D5C3] rounded-2xl p-6 max-w-lg">
-            <h3 className="font-medium text-[#6B4530] mb-4">
-              Write a Review
-            </h3>
+            <h3 className="font-medium text-[#6B4530] mb-4">Write a Review</h3>
             <form onSubmit={handleReviewSubmit} className="space-y-4">
               <input
                 type="text"
@@ -718,7 +794,8 @@ export default function ProductDetailClient() {
                   item.originalPrice && item.originalPrice > item.price;
                 const itemDiscountPercent = itemHasDiscount
                   ? Math.round(
-                      ((item.originalPrice - item.price) / item.originalPrice) * 100,
+                      ((item.originalPrice - item.price) / item.originalPrice) *
+                        100,
                     )
                   : 0;
 
@@ -776,8 +853,19 @@ export default function ProductDetailClient() {
             aria-label="Close zoom view"
             className="absolute top-5 right-5 w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition z-10"
           >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M18 6L6 18M6 6l12 12" strokeLinecap="round" strokeLinejoin="round" />
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+            >
+              <path
+                d="M18 6L6 18M6 6l12 12"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
             </svg>
           </button>
 
@@ -792,8 +880,19 @@ export default function ProductDetailClient() {
                 aria-label="Previous design"
                 className="absolute left-5 top-1/2 -translate-y-1/2 w-11 h-11 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition z-10"
               >
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M15 18l-6-6 6-6" strokeLinecap="round" strokeLinejoin="round" />
+                <svg
+                  width="22"
+                  height="22"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                >
+                  <path
+                    d="M15 18l-6-6 6-6"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
                 </svg>
               </button>
               <button
@@ -805,8 +904,19 @@ export default function ProductDetailClient() {
                 aria-label="Next design"
                 className="absolute right-5 top-1/2 -translate-y-1/2 w-11 h-11 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition z-10"
               >
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M9 18l6-6-6-6" strokeLinecap="round" strokeLinejoin="round" />
+                <svg
+                  width="22"
+                  height="22"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                >
+                  <path
+                    d="M9 18l6-6-6-6"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
                 </svg>
               </button>
             </>
@@ -833,20 +943,21 @@ export default function ProductDetailClient() {
         </div>
       )}
 
-      <WishlistContactModal
-        open={wishlistModalOpen}
-        onClose={() => setWishlistModalOpen(false)}
-        onSubmit={handleWishlistContactSubmit}
-      />
+      {wishlistModalOpen && product && (
+        <WishlistContactModal
+          product={product}
+          onSubmit={handleWishlistContactSubmit}
+          onSkip={handleWishlistContactSkip}
+        />
+      )}
 
-      <WishlistContactModal
-        open={notifyModalOpen}
-        onClose={() => setNotifyModalOpen(false)}
-        onSubmit={handleNotifyContactSubmit}
-        title="Notify me when available"
-        description="Share your name and number and we'll reach out on WhatsApp as soon as this is back in stock."
-        submitLabel="Notify Me"
-      />
+      {notifyModalOpen && product && (
+        <WishlistContactModal
+          product={product}
+          onSubmit={handleNotifyContactSubmit}
+          onSkip={handleNotifyContactSkip}
+        />
+      )}
     </main>
   );
 }
