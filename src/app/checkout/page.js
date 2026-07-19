@@ -136,6 +136,7 @@ export default function CheckoutPage() {
         name: item.name,
         price: item.price,
         qty: item.qty,
+        color: item.color || null,
       }));
 
       const orderSummary = {
@@ -413,6 +414,7 @@ export default function CheckoutPage() {
               >
                 <span className="text-[#6B4530]">
                   {item.name} x{item.qty}
+                  {item.color ? ` (${item.color})` : ""}
                 </span>
                 <span className="text-[#6B4530]">
                   Rs. {item.price * item.qty}

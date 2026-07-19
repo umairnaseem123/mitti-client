@@ -281,8 +281,9 @@ export default function AdminOrdersPage() {
                   <div className="border-t border-[#E5D5C3] pt-4 mb-4">
                     {order.items.map((item, idx) => (
                       <p key={idx} className="text-sm text-[#6B4530]">
-                        {item.name} x{item.qty} &mdash; Rs.{" "}
-                        {item.price * item.qty}
+                        {item.name}
+                        {item.color ? ` (${item.color})` : ""} x{item.qty}{" "}
+                        &mdash; Rs. {item.price * item.qty}
                       </p>
                     ))}
                   </div>

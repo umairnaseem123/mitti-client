@@ -76,7 +76,6 @@ export default function ProductDetailClient() {
   const [error, setError] = useState("");
   const [qty, setQty] = useState(1);
   const [selectedColor, setSelectedColor] = useState(null);
-  const [colorPickerOpen, setColorPickerOpen] = useState(false);
   const [added, setAdded] = useState(false);
   const [activeImage, setActiveImage] = useState(0);
   const [linkCopied, setLinkCopied] = useState(false);
@@ -534,68 +533,29 @@ export default function ProductDetailClient() {
             )}
           </div>
 
-          {colorPickerOpen && (
-            <div
-              className="fixed inset-0 z-40"
-              onClick={() => setColorPickerOpen(false)}
-            />
-          )}
-
-          <div className="mb-6 relative inline-block">
-            <span className="text-[#6B4530] block mb-2">
-              Color{selectedColor ? ` \u2014 ${selectedColor}` : ""}
-            </span>
-            <button
-              type="button"
-              onClick={() => setColorPickerOpen((v) => !v)}
-              className="flex items-center gap-2 px-4 py-2 rounded-lg border border-[#E5D5C3] bg-white hover:border-[#C1653A] transition"
-            >
-              <span
-                className="w-5 h-5 rounded-full border border-black/10 flex-shrink-0"
-                style={{
-                  backgroundColor: selectedColor ? getColorHex(selectedColor) : "#ffffff",
-                }}
-              />
-              <span className="text-sm text-[#6B4530]">
-                {selectedColor || "Choose a color"}
+          {product.colors?.length > 0 && (
+            <div className="mb-6">
+              <span className="text-[#6B4530] block mb-2">
+                Color{selectedColor ? ` \u2014 ${selectedColor}` : ""}
               </span>
-              <svg
-                className="w-4 h-4 text-[#8B6F5C]"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-              >
-                <path
-                  d="M6 9l6 6 6-6"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
-            </button>
-
-            {colorPickerOpen && (
-              <div className="absolute z-50 mt-2 p-4 bg-white border border-[#E5D5C3] rounded-xl shadow-lg grid grid-cols-6 gap-3 w-72">
-                {COLOR_SWATCHES.map((c) => (
+              <div className="flex flex-wrap gap-3">
+                {product.colors.map((color) => (
                   <button
-                    key={c.name}
+                    key={color}
                     type="button"
-                    onClick={() => {
-                      setSelectedColor(c.name);
-                      setColorPickerOpen(false);
-                    }}
-                    aria-label={`Select color ${c.name}`}
-                    title={c.name}
-                    className={`w-8 h-8 rounded-full border-2 transition flex items-center justify-center ${
-                      selectedColor === c.name
-                        ? "border-[#C1653A] ring-2 ring-offset-1 ring-[#C1653A]"
+                    onClick={() => setSelectedColor(color)}
+                    aria-label={`Select color ${color}`}
+                    title={color}
+                    className={`w-9 h-9 rounded-full border-2 transition flex items-center justify-center ${
+                      selectedColor === color
+                        ? "border-[#C1653A] ring-2 ring-offset-2 ring-[#C1653A]"
                         : "border-[#E5D5C3] hover:border-[#C1653A]"
                     }`}
-                    style={{ backgroundColor: c.hex }}
+                    style={{ backgroundColor: getColorHex(color) }}
                   >
-                    {selectedColor === c.name && (
+                    {selectedColor === color && (
                       <svg
-                        className="w-3.5 h-3.5"
+                        className="w-4 h-4"
                         viewBox="0 0 24 24"
                         fill="none"
                         stroke="white"
@@ -614,8 +574,8 @@ export default function ProductDetailClient() {
                   </button>
                 ))}
               </div>
-            )}
-          </div>
+            </div>
+          )}
 
           <div className="flex items-center gap-3 mb-6">
             <span className="text-[#6B4530]">Quantity:</span>
