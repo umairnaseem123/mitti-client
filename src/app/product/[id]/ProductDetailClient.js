@@ -58,10 +58,11 @@ function getColorHex(colorValue) {
 }
 
 function Stars({ rating, size = "text-base" }) {
+  const safeRating = rating || 0;
   return (
     <span className={`${size} text-[#C1653A] tracking-tight`}>
-      {"\u2605".repeat(rating)}
-      <span className="text-[#E5D5C3]">{"\u2605".repeat(5 - rating)}</span>
+      {"\u2605".repeat(safeRating)}
+      <span className="text-[#E5D5C3]">{"\u2605".repeat(5 - safeRating)}</span>
     </span>
   );
 }
@@ -102,8 +103,31 @@ export default function ProductDetailClient() {
   const [notifyRequested, setNotifyRequested] = useState(false);
 
   useEffect(() => {
-    if (id) fetchProduct();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    let cancelled = false;
+
+    async function load() {
+      if (!id) return;
+      setLoading(true);
+      setError("");
+      try {
+        const res = await api.get(`/api/products/${id}`);
+        if (!cancelled) {
+          setProduct(res.data || null);
+          setActiveImage(0);
+        }
+      } catch (err) {
+        console.error("Error fetching product:", err);
+        if (!cancelled) setError("Could not load product.");
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    }
+
+    load();
+
+    return () => {
+      cancelled = true;
+    };
   }, [id]);
 
   useEffect(() => {
@@ -119,10 +143,31 @@ export default function ProductDetailClient() {
   }, [product]);
 
   useEffect(() => {
-    if (product?.category) {
-      fetchRelatedProducts(product.category, product._id);
+    if (!product?.category) return;
+
+    let cancelled = false;
+
+    async function loadRelated() {
+      try {
+        const res = await api.get("/api/products", {
+          params: { category: product.category },
+        });
+        if (cancelled) return;
+        const data = Array.isArray(res.data) ? res.data : [];
+        const filtered = data
+          .filter((p) => p && p._id !== product._id)
+          .slice(0, 4);
+        setRelatedProducts(filtered);
+      } catch (err) {
+        console.error("Error fetching related products:", err);
+      }
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+
+    loadRelated();
+
+    return () => {
+      cancelled = true;
+    };
   }, [product?.category, product?._id]);
 
   useEffect(() => {
@@ -140,33 +185,6 @@ export default function ProductDetailClient() {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [zoomOpen]);
-
-  const fetchProduct = async () => {
-    try {
-      const res = await api.get(`/api/products/${id}`);
-      setProduct(res.data);
-      setActiveImage(0);
-    } catch (err) {
-      console.error("Error fetching product:", err);
-      setError("Could not load product.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const fetchRelatedProducts = async (category, currentProductId) => {
-    try {
-      const res = await api.get("/api/products", {
-        params: { category },
-      });
-      const filtered = res.data
-        .filter((p) => p._id !== currentProductId)
-        .slice(0, 4);
-      setRelatedProducts(filtered);
-    } catch (err) {
-      console.error("Error fetching related products:", err);
-    }
-  };
 
   const images = product?.images?.length ? product.images : [];
 
@@ -248,7 +266,7 @@ export default function ProductDetailClient() {
         rating: Number(reviewForm.rating),
         comment: reviewForm.comment.trim(),
       });
-      setProduct(res.data);
+      if (res.data) setProduct(res.data);
       setReviewForm({ customerName: "", rating: 5, comment: "" });
       setReviewSuccess("Thanks for your review!");
       setTimeout(() => setReviewSuccess(""), 4000);
@@ -282,6 +300,7 @@ export default function ProductDetailClient() {
   };
 
   const handleWishlistContactSubmit = async (name, phone) => {
+    if (!product) return;
     saveWishlistContact(name, phone);
     setWishlisted(true);
     await addToWishlist(product, images, { name, phone });
@@ -303,6 +322,7 @@ export default function ProductDetailClient() {
   };
 
   const handleNotifyContactSubmit = async (name, phone) => {
+    if (!product) return;
     saveContact(name, phone);
     await requestStockNotification(product._id, { name, phone });
     setNotifyRequested(true);
@@ -335,10 +355,10 @@ export default function ProductDetailClient() {
     );
   }
 
-  const reviews = product.reviews || [];
-  const faqs = product.faqs || [];
+  const reviews = Array.isArray(product.reviews) ? product.reviews : [];
+  const faqs = Array.isArray(product.faqs) ? product.faqs : [];
   const averageRating = reviews.length
-    ? reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length
+    ? reviews.reduce((sum, r) => sum + (r?.rating || 0), 0) / reviews.length
     : 0;
   const hasDiscount =
     product.originalPrice && product.originalPrice > product.price;
@@ -356,7 +376,8 @@ export default function ProductDetailClient() {
       ? description.slice(0, DESCRIPTION_LIMIT).trimEnd() + "\u2026"
       : description;
 
-  const shareText = `Check out ${product.name} on Mitti!`;
+  const productName = product.name || "This product";
+  const shareText = `Check out ${productName} on Mitti!`;
   const whatsappShareLink = `https://wa.me/?text=${encodeURIComponent(`${shareText} ${pageUrl}`)}`;
   const facebookShareLink = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(pageUrl)}`;
 
@@ -381,7 +402,7 @@ export default function ProductDetailClient() {
               <img
                 onClick={openZoom}
                 src={images[activeImage]}
-                alt={`${product.name} ${"\u2014"} design ${activeImage + 1}`}
+                alt={`${productName} \u2014 design ${activeImage + 1}`}
                 className="w-full h-full object-cover cursor-zoom-in"
               />
             ) : (
@@ -480,7 +501,7 @@ export default function ProductDetailClient() {
                 >
                   <img
                     src={img}
-                    alt={`${product.name} thumbnail ${index + 1}`}
+                    alt={`${productName} thumbnail ${index + 1}`}
                     className="w-full h-full object-cover"
                   />
                 </button>
@@ -491,7 +512,7 @@ export default function ProductDetailClient() {
 
         <div>
           <h1 className="font-[family-name:var(--font-playfair)] text-3xl text-[#6B4530] mb-3">
-            {product.name}
+            {productName}
           </h1>
 
           {reviews.length > 0 && (
@@ -780,13 +801,13 @@ export default function ProductDetailClient() {
                   className="bg-white border border-[#E5D5C3] rounded-xl p-4 group"
                 >
                   <summary className="cursor-pointer font-medium text-[#6B4530] list-none flex items-center justify-between">
-                    {faq.question}
+                    {faq?.question}
                     <span className="text-[#8B6F5C] group-open:rotate-45 transition-transform text-xl leading-none">
                       +
                     </span>
                   </summary>
                   <p className="text-[#8B6F5C] mt-3 text-sm leading-relaxed">
-                    {faq.answer}
+                    {faq?.answer}
                   </p>
                 </details>
               ))}
@@ -812,12 +833,12 @@ export default function ProductDetailClient() {
                 >
                   <div className="flex items-center justify-between mb-2">
                     <p className="font-medium text-[#6B4530]">
-                      {review.customerName}
+                      {review?.customerName}
                     </p>
-                    <Stars rating={review.rating} size="text-sm" />
+                    <Stars rating={review?.rating} size="text-sm" />
                   </div>
                   <p className="text-[#8B6F5C] text-sm leading-relaxed">
-                    {review.comment}
+                    {review?.comment}
                   </p>
                 </div>
               ))}
@@ -897,6 +918,7 @@ export default function ProductDetailClient() {
             </h2>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-5">
               {relatedProducts.map((item) => {
+                if (!item) return null;
                 const itemHasDiscount =
                   item.originalPrice && item.originalPrice > item.price;
                 const itemDiscountPercent = itemHasDiscount
@@ -905,6 +927,7 @@ export default function ProductDetailClient() {
                         100,
                     )
                   : 0;
+                const itemName = item.name || "Product";
 
                 return (
                   <Link
@@ -921,14 +944,14 @@ export default function ProductDetailClient() {
                       {item.images?.[0] ? (
                         <img
                           src={item.images[0]}
-                          alt={item.name}
+                          alt={itemName}
                           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                         />
                       ) : null}
                     </div>
                     <div className="p-3">
                       <p className="text-[#6B4530] font-medium text-sm truncate">
-                        {item.name}
+                        {itemName}
                       </p>
                       <div className="flex items-center gap-2 mt-1">
                         <p className="text-[#6B4530] font-semibold text-sm">
@@ -1035,7 +1058,7 @@ export default function ProductDetailClient() {
           >
             <img
               src={images[activeImage]}
-              alt={`${product.name} ${"\u2014"} zoomed view`}
+              alt={`${productName} \u2014 zoomed view`}
               onClick={() => setIsZoomed((z) => !z)}
               onMouseMove={handleZoomMouseMove}
               onMouseLeave={() => setIsZoomed(false)}
