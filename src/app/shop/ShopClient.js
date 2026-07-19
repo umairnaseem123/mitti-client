@@ -134,7 +134,12 @@ function ShopContent() {
 
   const handleWishlistSkip = async () => {
     try {
-      await performWishlistToggle(wishlistModalProduct, "add", undefined, undefined);
+      await performWishlistToggle(
+        wishlistModalProduct,
+        "add",
+        undefined,
+        undefined,
+      );
     } catch (err) {
       console.error("Error updating wishlist count:", err);
     } finally {
@@ -211,7 +216,9 @@ function ShopContent() {
 
       <section className="max-w-6xl mx-auto px-6 pb-24">
         {loading ? (
-          <p className="text-center text-[#8B6F5C] py-20">Loading products...</p>
+          <p className="text-center text-[#8B6F5C] py-20">
+            Loading products...
+          </p>
         ) : products.length === 0 ? (
           <p className="text-center text-[#8B6F5C] py-20">
             No products found. Try a different search or category.
@@ -222,13 +229,12 @@ function ShopContent() {
               const images = product.images || [];
               const activeIndex = getActiveIndex(product._id);
               const hasDiscount =
-                product.originalPrice &&
-                product.originalPrice > product.price;
+                product.originalPrice && product.originalPrice > product.price;
               const discountPercent = hasDiscount
                 ? Math.round(
                     ((product.originalPrice - product.price) /
                       product.originalPrice) *
-                      100
+                      100,
                   )
                 : 0;
               const isOutOfStock = !product.stock || product.stock <= 0;
@@ -256,7 +262,9 @@ function ShopContent() {
                     <button
                       type="button"
                       onClick={(e) => toggleWishlist(e, product)}
-                      aria-label={wishlisted ? "Remove from wishlist" : "Add to wishlist"}
+                      aria-label={
+                        wishlisted ? "Remove from wishlist" : "Add to wishlist"
+                      }
                       className="absolute bottom-2 left-2 z-10 w-8 h-8 rounded-full bg-white/90 hover:bg-white flex items-center justify-center shadow transition"
                     >
                       <svg
@@ -286,22 +294,48 @@ function ShopContent() {
                       <>
                         <button
                           type="button"
-                          onClick={(e) => handlePrevImage(e, product._id, images.length)}
+                          onClick={(e) =>
+                            handlePrevImage(e, product._id, images.length)
+                          }
                           aria-label="Previous design"
                           className="absolute left-1.5 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full bg-white/85 hover:bg-white text-[#6B4530] flex items-center justify-center shadow transition z-10"
                         >
-                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                            <path d="M15 18l-6-6 6-6" strokeLinecap="round" strokeLinejoin="round" />
+                          <svg
+                            width="14"
+                            height="14"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2.5"
+                          >
+                            <path
+                              d="M15 18l-6-6 6-6"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                            />
                           </svg>
                         </button>
                         <button
                           type="button"
-                          onClick={(e) => handleNextImage(e, product._id, images.length)}
+                          onClick={(e) =>
+                            handleNextImage(e, product._id, images.length)
+                          }
                           aria-label="Next design"
                           className="absolute right-1.5 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full bg-white/85 hover:bg-white text-[#6B4530] flex items-center justify-center shadow transition z-10"
                         >
-                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                            <path d="M9 18l6-6-6-6" strokeLinecap="round" strokeLinejoin="round" />
+                          <svg
+                            width="14"
+                            height="14"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2.5"
+                          >
+                            <path
+                              d="M9 18l6-6-6-6"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                            />
                           </svg>
                         </button>
 
