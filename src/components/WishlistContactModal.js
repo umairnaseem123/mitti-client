@@ -3,26 +3,72 @@
 import { useState } from "react";
 
 /**
- * Reusable popup that collects a customer's name + phone when they add
- * a product to their wishlist. Used by both ShopClient.js and
- * ProductDetailClient.js.
+ * Reusable popup that collects a customer's name + phone.
+ * Used by both ShopClient.js and ProductDetailClient.js, which call it
+ * two different ways — this component supports both:
+ *
+ *  1) ShopClient.js style — conditionally mounted, no `open` prop:
+ *     <WishlistContactModal product={product} onSubmit={...} onSkip={...} />
+ *
+ *  2) ProductDetailClient.js style — always mounted, visibility via `open`,
+ *     with optional custom copy (used for both "wishlist" and
+ *     "notify me when back in stock" flows):
+ *     <WishlistContactModal
+ *       open={wishlistModalOpen}
+ *       onClose={...}
+ *       onSubmit={...}
+ *       title="Notify me when available"
+ *       description="..."
+ *       submitLabel="Notify Me"
+ *     />
  *
  * This component is presentation-only: it does NOT call the API itself.
- * The backend saves name/phone as part of the same PUT /:id/wishlist
- * call that increments the count, so the parent owns that request.
+ * The parent owns the actual save request via onSubmit.
  *
  * Props:
- *  - product: { _id, name } — the product being wishlisted
+ *  - product?: { _id, name } — optional; when provided (and no custom
+ *      `description` is given), the default copy mentions the product by name
+ *  - open?: boolean — defaults to true, so callers that conditionally
+ *      mount the component (instead of passing `open`) still work
  *  - onSubmit: (name, phone) => Promise — called with trimmed values;
  *      should reject if the save fails so the modal can show an error
- *  - onSkip: () => void — called when the user skips leaving details
- *      (the wishlist add still happens, just without contact info)
+ *  - onSkip / onClose: () => void — either works; called when the user
+ *      closes the modal without necessarily finishing the form
+ *  - title?: string — overrides the default "Added to wishlist" heading
+ *  - description?: string | ReactNode — overrides the default body copy
+ *  - submitLabel?: string — overrides the default "Save" button text
  */
-export default function WishlistContactModal({ product, onSubmit, onSkip }) {
+export default function WishlistContactModal({
+  product,
+  open = true,
+  onSubmit,
+  onSkip,
+  onClose,
+  title,
+  description,
+  submitLabel = "Save",
+}) {
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
+
+  if (!open) return null;
+
+  const handleClose = onSkip || onClose || (() => {});
+
+  const modalTitle = title || "Added to wishlist";
+  const modalDescription =
+    description ??
+    (product ? (
+      <>
+        Leave your name and phone number and we&apos;ll reach out when{" "}
+        <span className="font-medium text-[#6B4530]">{product.name}</span>{" "}
+        is back or on offer.
+      </>
+    ) : (
+      "Leave your name and phone number and we'll reach out with updates."
+    ));
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -47,7 +93,7 @@ export default function WishlistContactModal({ product, onSubmit, onSkip }) {
   return (
     <div
       className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center px-4"
-      onClick={onSkip}
+      onClick={handleClose}
     >
       <div
         className="bg-[#FBF3E9] rounded-2xl shadow-xl max-w-sm w-full p-6 relative"
@@ -55,7 +101,7 @@ export default function WishlistContactModal({ product, onSubmit, onSkip }) {
       >
         <button
           type="button"
-          onClick={onSkip}
+          onClick={handleClose}
           aria-label="Close"
           className="absolute top-4 right-4 w-8 h-8 rounded-full flex items-center justify-center text-[#8B6F5C] hover:bg-white transition"
         >
@@ -65,13 +111,9 @@ export default function WishlistContactModal({ product, onSubmit, onSkip }) {
         </button>
 
         <h3 className="font-[family-name:var(--font-playfair)] text-xl text-[#6B4530] mb-1 pr-6">
-          Added to wishlist
+          {modalTitle}
         </h3>
-        <p className="text-sm text-[#8B6F5C] mb-5">
-          Leave your name and phone number and we&apos;ll reach out when{" "}
-          <span className="font-medium text-[#6B4530]">{product.name}</span>{" "}
-          is back or on offer.
-        </p>
+        <p className="text-sm text-[#8B6F5C] mb-5">{modalDescription}</p>
 
         <form onSubmit={handleSubmit} className="space-y-3">
           <input
@@ -98,11 +140,11 @@ export default function WishlistContactModal({ product, onSubmit, onSkip }) {
               disabled={submitting}
               className="flex-1 bg-[#6B4530] text-white px-5 py-2.5 rounded-full font-medium text-sm hover:bg-[#8B6F5C] transition disabled:opacity-50"
             >
-              {submitting ? "Saving..." : "Save"}
+              {submitting ? "Saving..." : submitLabel}
             </button>
             <button
               type="button"
-              onClick={onSkip}
+              onClick={handleClose}
               disabled={submitting}
               className="px-5 py-2.5 rounded-full font-medium text-sm border border-[#E5D5C3] text-[#6B4530] hover:bg-white transition disabled:opacity-50"
             >
@@ -114,4 +156,3 @@ export default function WishlistContactModal({ product, onSubmit, onSkip }) {
     </div>
   );
 }
-
